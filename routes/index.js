@@ -23,7 +23,7 @@ router.post('/admin',async function(req,res){
     console.log(data)
     res.send(data);
   } catch (e) {
-    console.error("Error finding user:", error);
+    console.error("Error finding user:", e);
     res.status(500).send("Error finding user");
   }
   
@@ -63,7 +63,7 @@ router.post("/admin/update",async(req,res)=>{
       res.send(data);
   }
   catch(e){
-    console.error("Error updating user:", error);
+    console.error("Error updating user:", e);
     res.status(500).send("Error updating user");
   }
 })
