@@ -8,6 +8,9 @@ router.get('/',function(req,res){
   res.render('index')
 })
 
+
+// -----------------------Admin side MCU requests here---------------------------
+
 // takes rfid and returns all details
 router.post('/admin',async function(req,res){
   try {
@@ -74,11 +77,36 @@ router.post("/admin/delete",async(req,res)=>{
       res.send(data);
   }
   catch(e){
-    console.error("Error deleting user:", error);
+    console.error("Error deleting user:", e);
     res.status(500).send("Error deleting user");
   }
 })
 
+// -----------------------Student side MCU requests here---------------------------
 
+router.post("/student",async(req,res)=>{
+  try {
+    let rfid = req.body.rfid;
+    let data = await userModel.findOne({rfid : rfid})
+    
+    if(data==null){
+      res.status(404).send();
+    }
+    else if(data.expiry_date<Date.now()){
+      res.status(403).send();
+    }
+    else{
+      console.log(data)
+      data.checkedIn = !data.checkedIn;
+      var type = data.checkedIn?"CheckIn":"CheckOut";
+      let newEntry = {entry_type:type,time:req.body.time}
+      let upd = await userModel.updateOne({rfid:rfid},{$push:{entries:newEntry},$set:{checkedIn:data.checkedIn}})
+      res.status(200).send(upd);
+    }
+  } catch (e) {
+    console.error("Error finding user:", e);
+    res.status(500).send();
+  }
+})
 
 module.exports = router;
