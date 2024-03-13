@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-mongoose.connect("mongodb://127.0.0.1:27017/attendance")
+mongoose.connect("mongodb+srv://aakshatmalhotra100:4FMJMGLHK1vMRKMA@cluster0.kqekdee.mongodb.net/")
 
 const studentSchema = mongoose.Schema({
   name:String,

@@ -14,14 +14,14 @@ router.get('/',function(req,res){
 // takes rfid and returns all details
 router.post('/admin',async function(req,res){
   try {
-    let rfid = req.body.rfid;
+    let rfid = req.body.rfid; // got the rfid
     let data = await userModel.findOne({rfid : rfid})
-    
-    if(data==null){
+
+    if(!data){
       data={"rfid":rfid}
     }
     console.log(data)
-    res.send(data);
+    res.send(data);  // pura data hoga ya fir only rfid
   } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send("Error finding user");
@@ -29,17 +29,20 @@ router.post('/admin',async function(req,res){
   
 })
 
-// create
+// frontend ke paas ab rfid aa gyi 
+// update and insert new student kar sakta using this 
+
+// create -> student create
 router.post('/admin/create', async function(req, res) {
   try {
     // Create a new user using the userModel
-    let data = await userModel.create({
-      name: req.body.name,
-      rfid: req.body.rfid,
-      roll_no: req.body.roll,
-      checkedIn: false,
-      expiry_date:req.body.expiry_date
-    });
+    const {rfid} = req.body; 
+    const std = await userModel.findOne({rfid: rfid});
+    if (std){
+      return res.status(409).send({message : "user already exists"});
+    }
+    
+    let data = await userModel.create(req.body);
     // Send back the created user object as a response
     res.send(data);
   } catch (error) {
@@ -53,7 +56,12 @@ router.post('/admin/create', async function(req, res) {
 // update
 router.post("/admin/update",async(req,res)=>{
   try{
+    // findandUpdate
       let rfid = req.body.rfid;
+      // const std = await userModel.findOne({rfid: rfid});
+      // if (!std){
+      //   res.status(404).send({message : "user doesn't exist"});
+      // }
       let data = await userModel.updateOne({rfid:rfid},{$set:{
         name: req.body.name,
         roll_no: req.body.roll_no,
@@ -74,6 +82,9 @@ router.post("/admin/delete",async(req,res)=>{
   try{
       let rfid = req.body.rfid;
       let data = await userModel.deleteOne({ rfid: rfid });
+      if (!data){
+        res.status(404).send({message: "User already doesn't exist"});
+      }
       res.send(data);
   }
   catch(e){
@@ -83,23 +94,23 @@ router.post("/admin/delete",async(req,res)=>{
 })
 
 // -----------------------Student side MCU requests here---------------------------
-
+// attendance h/w -> calls this route during entry and exit
 router.post("/student",async(req,res)=>{
   try {
-    let rfid = req.body.rfid;
+    let {rfid, time} = req.body;
     let data = await userModel.findOne({rfid : rfid})
     
     if(data==null){
-      res.status(404).send();
+      res.status(404).send({message: "Student not registered"});
     }
-    else if(data.expiry_date<Date.now()){
-      res.status(403).send();
+    else if(data.expiry_date<Date.parse(time)){
+      res.status(403).send({message: "Fees due"});
     }
     else{
       console.log(data)
       data.checkedIn = !data.checkedIn;
       var type = data.checkedIn?"CheckIn":"CheckOut";
-      let newEntry = {entry_type:type,time:req.body.time}
+      let newEntry = {entry_type:type,time:time}
       let upd = await userModel.updateOne({rfid:rfid},{$push:{entries:newEntry},$set:{checkedIn:data.checkedIn}})
       res.status(200).send(upd);
     }
