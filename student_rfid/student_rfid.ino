@@ -1,18 +1,19 @@
 #include <ESP8266WiFi.h>
 #include <SPI.h>
 #include <MFRC522.h>
-
+#include <ArduinoJson.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
-const char* ssid = "vivo 1916";
-const char* password = "gshfjdienf";
+const char* ssid = "NSUT_WIFI";
+const char* password = "";
+JsonArray arr;
 
 #define RST_PIN D3  // Define the GPIO pin connected to the RFID reader's RST pin
 #define SS_PIN D4   // Define the GPIO pin connected to the RFID reader's SS pin
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.111.1:3000/student";
+String serverName = "http://127.0.0.1:3000/student";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String rfid = ""; // Variable to store the detected RFID UID
 
@@ -41,26 +42,28 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
+  // getalldata
+  getAllData();
+
   // Initialize RFID reader
   SPI.begin();
   mfrc522.PCD_Init();
   Serial.println("RFID reader initialized");
+
+  
 }
 
 
 
 void loop() {
   // Scan for RFID tags/cards
-  // rfid = getRfid();
-  // if (rfid == ""){
-  //   return; 
-  // }
-  rfid="B1A8891D";
+  rfid = getRfid();
+  if (rfid == ""){
+    return; 
+  }
+  // rfid="B1A8891D";
   int status = sendToBackend();
   glowLED(status);
-  // delay(2000);
-
-
 }
 
 void glowLED(int status){
@@ -68,25 +71,25 @@ void glowLED(int status){
   if(status==404){
     // red (not found)
     digitalWrite(D0, HIGH);
-    delay(1000);  // 1 second delay
+    delay(500);  // 1 second delay
     digitalWrite(D0, LOW);
 
   }else if(status==403){
     // yellow (fees due)
     digitalWrite(D1, HIGH);
-    delay(1000);  // 1 second delay
+    delay(500);  // 1 second delay
     digitalWrite(D1, LOW);
 
   }else if(status==200){
     // green (ok)
     digitalWrite(D2, HIGH);
-    delay(1000);  // 1 second delay
+    delay(500);  // 1 second delay
     digitalWrite(D2, LOW);
 
   }else{
     // blue (server error)
     digitalWrite(D8, HIGH);
-    delay(1000);  // 1 second delay
+    delay(500);  // 1 second delay
     digitalWrite(D8, LOW);
 
   }
@@ -145,10 +148,49 @@ int sendToBackend(){
     // delay(5000);
     Serial.print("HTTP Response code: ");
     Serial.println(httpResponseCode);
-        
+      
     // Free resources
     http.end();
 
     return httpResponseCode;
+}
+
+void getAllData(){
+  WiFiClient client;
+  HTTPClient http;
+  // StaticJsonBuffer<300> JSONBuffer;
+  JsonDocument doc;
+
+  String serverPath ="http://10.100.169.133:3000/allData";
+  
+  // Your Domain name with URL path or IP address with path
+  http.begin(client, serverPath.c_str());
+
+  // If you need Node-RED/server authentication, insert user and password below
+  //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
+    
+  // Send HTTP GET request
+  int httpResponseCode = http.GET();
+  
+  if (httpResponseCode>0) {
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    String payload = http.getString();
+    Serial.println(payload);
+
+    deserializeJson(doc, payload);
+    arr = doc.as<JsonArray>();
+    for (JsonObject obj: arr){
+      Serial.println(obj["rfid"].as<String>());
+      Serial.println(obj["expiry_date"].as<String>());
+      // Serial.println(arr.size());
+    }
+  }
+  else {
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
+  }
+  // Free resources
+  http.end();
 }
 

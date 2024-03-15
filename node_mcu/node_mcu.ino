@@ -12,7 +12,7 @@ const char* password = "";
 #define SS_PIN D4   // Define the GPIO pin connected to the RFID reader's SS pin
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://10.100.169.133:3000/admin";
+String serverName = "http://10.100.158.202:3000/admin";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String rfid = ""; // Variable to store the detected RFID UID
 
@@ -104,7 +104,13 @@ void sendToBackend(){
     
     Serial.print("HTTP Response code: ");
     Serial.println(httpResponseCode);
-        
+    
+    // Check for errors
+    if (httpResponseCode != HTTP_CODE_OK) {
+      Serial.println("Error sending data to backend");
+      // Handle error appropriately, e.g., retry, or take corrective action
+    }
+
     // Free resources
     http.end();
 }
