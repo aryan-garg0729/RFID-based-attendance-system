@@ -94,24 +94,53 @@ router.post("/admin/delete",async(req,res)=>{
 })
 
 // -----------------------Student side MCU requests here---------------------------
-router.get('/allData', async (req, res) =>{
-  try{
-    let data = await userModel.find(); 
-    console.log(data);
-    let sendData = [];
-    for (let i = 0; i < data.length; i++){
-      // console.log(data["rfid"]);
+// router.get('/allData', async (req, res) =>{
+//   try{
+//     let data = await userModel.find(); 
+//     console.log(data);
+//     let sendData = [];
+//     for (let i = 0; i < data.length; i++){
 
-      sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date})
+//       sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date})
+//     }
+
+//     res.status(200).send(sendData);
+//   }
+//   catch (e) {
+//     console.error("Error finding user:", e);
+//     res.status(500).send();
+//   }
+// })
+
+router.get('/allData', async (req, res) => {
+  try {
+    let page = req.query.page ? parseInt(req.query.page) : 1; // Get the requested page number from query parameters
+    let pageSize = 2; // Define the number of items per page
+
+    // Calculate the skip value based on the requested page number and page size
+    let skip = (page - 1) * pageSize;
+
+    // Query the database to retrieve a subset of data based on pagination
+    let data = await userModel.find().skip(skip).limit(pageSize);
+
+    // if (data.size() >= 20) morepage = true;
+    // data < 20 -> false 
+
+    console.log(data);
+
+    let sendData = [];
+    for (let i = 0; i < data.length; i++) {
+      sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date});
     }
 
     res.status(200).send(sendData);
-  }
-  catch (e) {
+  } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send();
   }
-})
+});
+
+
 
 
 // attendance h/w -> calls this route during entry and exit
