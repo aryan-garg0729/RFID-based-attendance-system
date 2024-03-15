@@ -94,6 +94,26 @@ router.post("/admin/delete",async(req,res)=>{
 })
 
 // -----------------------Student side MCU requests here---------------------------
+router.get('/allData', async (req, res) =>{
+  try{
+    let data = await userModel.find(); 
+    console.log(data);
+    let sendData = [];
+    for (let i = 0; i < data.length; i++){
+      // console.log(data["rfid"]);
+
+      sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date})
+    }
+
+    res.status(200).send(sendData);
+  }
+  catch (e) {
+    console.error("Error finding user:", e);
+    res.status(500).send();
+  }
+})
+
+
 // attendance h/w -> calls this route during entry and exit
 router.post("/student",async(req,res)=>{
   try {
