@@ -6,6 +6,11 @@
 #include <WiFiClient.h>
 #include <FS.h>
 
+// log and auth basically ki offline validate karega ki authorized hai ya (log file maintain karni hai )
+
+
+
+
 const char* ssid = "B73 G Flor";
 const char* password = "hadoop@spark";
 // Define constants for file paths
@@ -104,7 +109,7 @@ void loop() {
       status=sendToBackend();
     }
     else {
-      status = logAndAuth();
+      status = logAndAuth(rfid);
     }
   }
   
@@ -206,9 +211,32 @@ int sendToBackend(){
     return httpResponseCode;
 }
 
-int logAndAuth(){
+int getStatusCodeFromFile(int rfid){
+    // somehow search from the file and get the expiry date and 
+    bool found = false; // assuming that the student is not present
+    if (found == false){
+      return 404; 
+    }
+
+    time_t currentTime = timeClient.getEpochTime(); // implement it
+    time_t expiryDate = // implement it 
+
+    if (currentTime  > expiryDate){
+      return 403; 
+    }
+    return 200; 
+}
+
+
+int logAndAuth(int rfid){
   // to be written
-  return 200;
+  int StatusCode = getStatusCodeFromFile(rfid); // implement it 
+
+  // logic to write the entry in the log file -> implement it
+  writeInLogFile(rfid); 
+
+  
+  return StatusCode;
 }
 
 void getAllData(){
