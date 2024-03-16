@@ -121,19 +121,21 @@ router.get('/allData', async (req, res) => {
     let skip = (page - 1) * pageSize;
 
     // Query the database to retrieve a subset of data based on pagination
-    let data = await userModel.find().skip(skip).limit(pageSize);
+    let data = await userModel.find().skip(skip).limit(pageSize).select('-_id rfid expiry_date');
 
     // if (data.size() >= 20) morepage = true;
     // data < 20 -> false 
 
     console.log(data);
-
-    let sendData = [];
-    for (let i = 0; i < data.length; i++) {
-      sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date});
+    if(data.length==0){
+      return res.status(404).send({message:"done"});
     }
+    // let sendData = [];
+    // for (let i = 0; i < data.length; i++) {
+    //   sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date});
+    // }
 
-    res.status(200).send(sendData);
+    res.status(200).send(data);
   } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send();
@@ -147,7 +149,7 @@ router.get('/allData', async (req, res) => {
 router.post("/student",async(req,res)=>{
   try {
     let {rfid, time} = req.body;
-    let data = await userModel.findOne({rfid : rfid})
+    let data = await userModel.findOne({rfid : rfid}).select('-_id rfid expiry_date checkedIn');
     
     if(data==null){
       res.status(404).send({message: "Student not registered"});
