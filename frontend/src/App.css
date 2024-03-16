@@ -1,0 +1,9 @@
+:root {
+    --primary-color : #008DDA;
+    --background-color: #F7EEDD;
+    --secondary-color : #41C9E2;
+    --tertiary-color: #ACE2E1;
+    --white-color : white;
+    --box-shadow-light : rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    --box-shadow-dark : rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
