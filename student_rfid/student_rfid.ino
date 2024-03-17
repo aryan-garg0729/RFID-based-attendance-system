@@ -8,16 +8,17 @@
 
 const char* ssid = "B73 G Flor";
 const char* password = "hadoop@spark";
+
 // Define constants for file paths
 const char* databaseFilePath = "/database.txt";
-
+const char* logFilePath = "/log.txt";
 
 #define RST_PIN D3  // Define the GPIO pin connected to the RFID reader's RST pin
 #define SS_PIN D4   // Define the GPIO pin connected to the RFID reader's SS pin
+MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 //Your Domain name with URL path or IP address with path
 String serverName = "http://192.168.1.104:3000/student";
-MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String rfid = ""; // Variable to store the detected RFID UID
 JsonArray arr;
 bool iswifi = false;
@@ -57,7 +58,7 @@ void setup() {
       initializeSPIFFS();
       getAllData();
       // printing database.txt file
-      readAllDataFromFile();
+      // readAllDataFromFile(databaseFilePath);
     }
     else Serial.println("WiFi not available");
   }
@@ -69,10 +70,16 @@ void setup() {
   mfrc522.PCD_Init();
   Serial.println("RFID reader initialized");
 
+  File log = SPIFFS.open(logFilePath, "w");
+  if (!log) {
+    Serial.println("Failed to open file for writing");
+  }
+  else{
+    log.close();
+    Serial.println("log file created");
+  }
   
 }
-
-
 
 void loop() {
   // Scan for RFID tags/cards
@@ -107,7 +114,9 @@ void loop() {
       status = logAndAuth();
     }
   }
-  
+  // status = logAndAuth();
+  // readAllDataFromFile();
+  Serial.println("");
   glowLED(status);
 }
 
@@ -131,7 +140,7 @@ void glowLED(int status){
   }else if(status==403){
     // yellow (fees due)
     digitalWrite(D1, HIGH);
-    delay(500);  // 1 second delay
+    delay(500);  // 0.5 second delay
     digitalWrite(D1, LOW);
 
   }else if(status==200){
@@ -153,19 +162,19 @@ String getRfid(){
   String rfid = "";
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
     // Print UID of the tag/card
-    Serial.print("Card UID: ");
+    // Serial.print("Card UID: ");
     for (byte i = 0; i < mfrc522.uid.size; i++) {
-      Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-      Serial.print(mfrc522.uid.uidByte[i], HEX);
+      // Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+      // Serial.print(mfrc522.uid.uidByte[i], HEX);
       rfid.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? "0" : ""));
       rfid.concat(String(mfrc522.uid.uidByte[i], HEX));
     }
-    Serial.println();
+    // Serial.println();
     
 
     // Store UID in a variable
     rfid.toUpperCase();
-    Serial.println("Detected UID: " + rfid);
+    // Serial.println("Detected UID: " + rfid);
     // delay(2000);
 
     // Halt PICC
@@ -194,11 +203,11 @@ int sendToBackend(){
     // date is static for now (either get dedicated hardware or use wifi)
     String date = "2012-04-23T18:25:43.511Z";
     String data = "{\"rfid\":\"" + rfid + "\", \"" + "time\":\"" + date + "\"}";
-    Serial.println(data);
+    // Serial.println(data);
     int httpResponseCode = http.POST(data); 
     // delay(5000);
-    Serial.print("HTTP Response code: ");
-    Serial.println(httpResponseCode);
+    // Serial.print("HTTP Response code: ");
+    // Serial.println(httpResponseCode);
       
     // Free resources
     http.end();
@@ -207,8 +216,60 @@ int sendToBackend(){
 }
 
 int logAndAuth(){
-  // to be written
-  return 200;
+  // Open the file for reading
+  File file = SPIFFS.open(databaseFilePath, "r");
+  if (!file) {
+    Serial.println("Failed to open file for reading");
+    return 500;
+  }
+
+  // Read data line by line
+  while (file.available()) {
+    // Read a line from the file
+    String line = file.readStringUntil('\n');
+    // Print the data to Serial (you can modify this part as needed)
+    // Serial.println(line);
+
+    // Find the position of the space character
+    int spaceIndex = line.indexOf(' ');
+
+    // Check if the space character exists
+    if (spaceIndex != -1) {
+        // Extract RFID and expiry date using substring
+        String id = line.substring(0, spaceIndex);
+        String exp = line.substring(spaceIndex + 1);
+
+        // currentDateTime to be written !!!!!!!!!!!!
+        String currentDateTime=exp;
+        if(rfid==id){
+          // Close the file
+          file.close();
+          
+          if(currentDateTime==exp){
+            // log
+            File log = SPIFFS.open(logFilePath, "a");
+            if (!log) {
+              Serial.println("Failed to open file for writing");
+              return 500;
+            }
+            log.println(rfid+" "+currentDateTime);
+            Serial.println("log created");
+            log.close();
+            return 200;
+          }else {
+            return 403;
+          }
+        }
+    } else {
+        // Handle the case where the line doesn't contain a space character
+        Serial.println("Invalid format in line: " + line);
+    }
+  }
+
+
+  // Close the file
+  file.close();
+  return 404;
 }
 
 void getAllData(){
@@ -271,20 +332,23 @@ void getAllData(){
   localRFIDDataFile.close();
 }
 
-void readAllDataFromFile() {
+void readAllDataFromFile(String path) {
   // Open the file for reading
-  File file = SPIFFS.open(databaseFilePath, "r");
+  File file = SPIFFS.open(path, "r");
   if (!file) {
     Serial.println("Failed to open file for reading");
     return;
   }
 
   // Read data line by line
+  Serial.println("data: ");
   while (file.available()) {
     // Read a line from the file
     String data = file.readStringUntil('\n');
+
     // Print the data to Serial (you can modify this part as needed)
     Serial.println(data);
+
   }
 
   // Close the file
