@@ -10,17 +10,16 @@ router.get("/", function (req, res) {
 
 // -----------------------Admin side MCU requests here---------------------------
 
-// takes rfid and returns all details
-router.post("/admin", async function (req, res) {
+// takes rfid and returns details by rfid
+router.get("/admin/findByRfid", async function (req, res) {
   try {
     let rfid = req.body.rfid; // got the rfid
     let data = await userModel.findOne({ rfid: rfid });
 
     if (!data) {
-      data = { rfid: rfid };
+      res.status(404).send({ message: "user not found", rfid: rfid }); //
     }
-    console.log(data);
-    res.send(data); // pura data hoga ya fir only rfid
+    res.status(200).send(data); // pura data hoga ya fir only rfid
   } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send("Error finding user");
@@ -42,7 +41,7 @@ router.post("/admin/create", async function (req, res) {
 
     let data = await userModel.create(req.body);
     // Send back the created user object as a response
-    res.send(data);
+    res.status(201).send({ message: "User Created Successfully", data });
   } catch (error) {
     // Handle any errors that occur during user creation
     console.error("Error creating user:", error);
@@ -78,17 +77,33 @@ router.post("/admin/update", async (req, res) => {
 });
 
 // delete
-router.post("/admin/delete", async (req, res) => {
+router.delete("/admin/delete", async (req, res) => {
   try {
     let rfid = req.body.rfid;
-    let data = await userModel.deleteOne({ rfid: rfid });
+    let data = await userModel.findOne({ rfid: rfid });
     if (!data) {
-      res.status(404).send({ message: "User already doesn't exist" });
+      res.status(404).send({ message: "User doesn't exist" });
+    } else {
+      data = await userModel.findOneAndDelete({ rfid: rfid });
+      res.status(200).send({ message: "User Deleted Successfully", data });
     }
-    res.send(data);
   } catch (e) {
     console.error("Error deleting user:", e);
     res.status(500).send("Error deleting user");
+  }
+});
+
+// fetchAllData
+router.get("/admin/fetchAll", async (req, res) => {
+  try {
+    let data = await userModel.find();
+    if (!data) {
+      res.status(404).send({ message: "Database is Empty" });
+    }
+    res.status(200).send(data);
+  } catch (e) {
+    console.error("Error getting all user:", e);
+    res.status(500).send("Error getting all user");
   }
 });
 
