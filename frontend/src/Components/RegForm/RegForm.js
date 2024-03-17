@@ -1,8 +1,24 @@
-import React, { useState }from "react";
+import React, { useState, useEffect }from "react";
+import axios from 'axios';
 import "./RegForm.css";
-const RegForm = () => {
 
+
+
+
+
+const RegForm = () => {
+    const [data, setData] = useState({ hits: [] });
     let [details, setDetails] = useState({tagId:"", name:"", rollNumber:"", gender:"", phone:""});
+
+    useEffect(async () => {
+      const result = await axios(
+        'https://hn.algolia.com/api/v1/search?query=redux',
+      );
+  
+      setData(result.data);
+    });
+
+
 
     const inputEvent=(event)=>{
 
@@ -10,7 +26,7 @@ const RegForm = () => {
         let name = event.target.name;
 
 
-        // 🔴🔴 METHOD ONE: USING OBJECT DESTRUCTURING
+        // set details onChange event
         setDetails( (previousValue) => {
            return {...previousValue,
             [name] : value}
@@ -29,7 +45,6 @@ const RegForm = () => {
     return (
         <>
             <div className='formDiv'>
-                {/* //🔴🔴⚠️ value attribute ke bina, form mei input data type hote hue show nahi hoga!! , but input to hoga! */}
                 <form onSubmit={actionSubmit}>
                     <input type="text" placeholder="RFID Tag ID" name="tagId" value={details.tagId} onChange={inputEvent}/>
                     <input type="text" placeholder="Name" name="name" value={details.name} onChange={inputEvent} />
