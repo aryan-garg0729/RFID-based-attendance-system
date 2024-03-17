@@ -9,6 +9,10 @@
   width: fit-content;
   margin: 2rem auto;
 }
+.formDiv label {
+  padding-left: 3px;
+  font-size: small;
+}
 .formDiv form {
   margin: auto;
   display: flex;
@@ -56,8 +60,11 @@
   width: 100%;
   height: 100%;
 }
-.formDiv .submitButton {
+.formDiv .createButton {
   background-color: rgb(111, 222, 111);
+}
+.formDiv .updateButton {
+  background-color: rgb(253, 255, 162);
 }
 .formDiv .deleteButton {
   background-color: rgb(255, 67, 64);
@@ -71,8 +78,5 @@
 }
 
 .formDiv input:hover {
-  background-color: rgb(214, 214, 214);
-}
-.formDiv input::placeholder {
-  color: rgb(150, 150, 150);
+  background-color: rgb(243, 243, 243);
 }

@@ -4,7 +4,7 @@ const GlobalFilter = () => {
   return (
    <span>
     Search:{' '}
-    <input value = {"filter" || ''} />
+    <input  />
    </span>
   )
 }

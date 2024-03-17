@@ -11,20 +11,14 @@ const Header = () => {
       <Navbar bg="primary" data-bs-theme="dark" className="navbar">
         <Container>
           <Nav className="me-auto">
-            <Nav.Link>
-              <NavLink to="/" className="navlink">
-                Home
-              </NavLink>
+            <Nav.Link as={NavLink} to="/" >
+              Home
             </Nav.Link>
-            <Nav.Link>
-              <NavLink to="/RegForm" className="navlink">
-                Register
-              </NavLink>
+            <Nav.Link as={NavLink} to="/RegForm" >
+              Register
             </Nav.Link>
-            <Nav.Link>
-              <NavLink to="/fetchAll" className="navlink">
-                GetAll
-              </NavLink>
+            <Nav.Link as={NavLink} to="/fetchAll" >
+              GetAll
             </Nav.Link>
           </Nav>
         </Container>
