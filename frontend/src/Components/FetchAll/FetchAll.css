@@ -1,13 +1,16 @@
 table {
   font-family: Arial, Helvetica, sans-serif;
   border-collapse: collapse;
-  width: 100%;
+  width: 90vw;
+  margin : auto;
+  margin-top:1rem;
+  margin-bottom: 1rem;
 }
-
 table td,
 table th {
   border: 1px solid #ddd;
   padding: 8px;
+  /* border-radius: 20px; */
 }
 
 table tr:nth-child(even) {
@@ -24,4 +27,22 @@ table th {
   text-align: center;
   background-color: var(--secondary-color);
   color: white;
+}
+
+table thead {
+  position: sticky;
+  top: 0;
+}
+table tbody tr td:hover:nth-child(3) {
+  color: var(--primary-color);
+  cursor:pointer;
+  text-decoration: underline;
+}
+.tableContainer {
+  display: gird;
+  place-items: center;
+}
+.navigators{
+  width:fit-content;
+margin: auto;
 }
