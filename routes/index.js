@@ -1,6 +1,5 @@
 var express = require("express");
 var router = express.Router();
-
 const userModel = require("./users");
 
 /* GET home page. */
@@ -11,6 +10,7 @@ router.get("/", function (req, res) {
 // -----------------------Admin side MCU requests here---------------------------
 // takes rfid and returns all details
 let previousRfidData = {};
+
 router.post('/admin',async function(req,res){
   try {
     let rfid = req.body.rfid; // got the rfid
@@ -18,12 +18,12 @@ router.post('/admin',async function(req,res){
     
     if(!data){
       previousRfidData={
-        name: "",
-        rfid: rfid,
-        roll_no: "",
-        checkedIn: "",
-        expiry_date: "",
-        entries: [],
+        "name": "",
+        "rfid": rfid,
+        "roll_no": "",
+        "checkedIn": "",
+        "expiry_date": "",
+        "entries": [],
       }
       res.status(404).send({message:"user not found"});
     }
@@ -31,6 +31,7 @@ router.post('/admin',async function(req,res){
       previousRfidData=data;
       res.status(200).send({message:"user found"});  // pura data hoga ya fir only rfid
     }
+    
   } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send("Error finding user");
@@ -46,9 +47,10 @@ router.post('/admin',async function(req,res){
 router.get("/admin/findByRfid",  function (req, res) {
   try {
     if(Object.keys(previousRfidData).length > 0){
-      console.log(Object.keys(previousRfidData).length);
-      previousRfidData={};
+      // console.log(Object.keys(previousRfidData).length);
+     
       res.status(200).send(previousRfidData);
+      previousRfidData={};
       
       // previousRfidData;
     }

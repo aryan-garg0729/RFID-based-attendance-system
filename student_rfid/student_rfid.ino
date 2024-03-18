@@ -6,8 +6,8 @@
 #include <WiFiClient.h>
 #include <FS.h>
 
-const char* ssid = "NSUT_WIFI";
-const char* password = "";
+const char* ssid = "B73 G Flor";
+const char* password = "hadoop@spark";
 
 // Define constants for file paths
 const char* databaseFilePath = "/database.txt";
@@ -18,7 +18,7 @@ const char* logFilePath = "/log.txt";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://10.100.191.114:4000/student";
+String serverName = "http://192.168.1.105:4000/student";
 String rfid = ""; // Variable to store the detected RFID UID
 JsonArray arr;
 bool iswifi = false;
@@ -286,7 +286,7 @@ void getAllData(){
   for(int i = 1;;i++){
     // Convert integer to string
     String pageParam = String(i);
-    String serverPath ="http://10.100.191.114:4000/allData?page="+pageParam;
+    String serverPath ="http://192.168.1.105:4000/allData?page="+pageParam;
 
     // Your Domain name with URL path or IP address with path
     if(iswifi)http.begin(client, serverPath.c_str());

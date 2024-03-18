@@ -29,12 +29,13 @@ const RegForm = () => {
   //fetch data from backend
   async function fetchData() {
     try {
-      const result = await axios(GET_URL);
+      let result = await axios(GET_URL);
       // if there is rfid present
       if (result.data) setDetails(result.data);
-      console.log(result.data);
+      result.data={};
+      // console.log(result.data);
     } catch (e) {
-      console.log(e);
+      console.log("err");
     }
   }
 
