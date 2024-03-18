@@ -6,8 +6,8 @@
 #include <WiFiClient.h>
 #include <FS.h>
 
-const char* ssid = "B73 G Flor";
-const char* password = "hadoop@spark";
+const char* ssid = "NSUT_WIFI";
+const char* password = "";
 
 // Define constants for file paths
 const char* databaseFilePath = "/database.txt";
@@ -18,7 +18,7 @@ const char* logFilePath = "/log.txt";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.1.104:3000/student";
+String serverName = "http://10.100.191.114:4000/student";
 String rfid = ""; // Variable to store the detected RFID UID
 JsonArray arr;
 bool iswifi = false;
@@ -117,6 +117,7 @@ void loop() {
   // status = logAndAuth();
   // readAllDataFromFile();
   Serial.println("");
+  Serial.println(status);
   glowLED(status);
 }
 
@@ -162,10 +163,10 @@ String getRfid(){
   String rfid = "";
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
     // Print UID of the tag/card
-    // Serial.print("Card UID: ");
+    Serial.print("Card UID: ");
     for (byte i = 0; i < mfrc522.uid.size; i++) {
-      // Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-      // Serial.print(mfrc522.uid.uidByte[i], HEX);
+      Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+      Serial.print(mfrc522.uid.uidByte[i], HEX);
       rfid.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? "0" : ""));
       rfid.concat(String(mfrc522.uid.uidByte[i], HEX));
     }
@@ -174,7 +175,7 @@ String getRfid(){
 
     // Store UID in a variable
     rfid.toUpperCase();
-    // Serial.println("Detected UID: " + rfid);
+    Serial.println("Detected UID: " + rfid);
     // delay(2000);
 
     // Halt PICC
@@ -203,7 +204,7 @@ int sendToBackend(){
     // date is static for now (either get dedicated hardware or use wifi)
     String date = "2012-04-23T18:25:43.511Z";
     String data = "{\"rfid\":\"" + rfid + "\", \"" + "time\":\"" + date + "\"}";
-    // Serial.println(data);
+    Serial.println(data);
     int httpResponseCode = http.POST(data); 
     // delay(5000);
     // Serial.print("HTTP Response code: ");
@@ -285,7 +286,7 @@ void getAllData(){
   for(int i = 1;;i++){
     // Convert integer to string
     String pageParam = String(i);
-    String serverPath ="http://192.168.1.104:3000/allData?page="+pageParam;
+    String serverPath ="http://10.100.191.114:4000/allData?page="+pageParam;
 
     // Your Domain name with URL path or IP address with path
     if(iswifi)http.begin(client, serverPath.c_str());

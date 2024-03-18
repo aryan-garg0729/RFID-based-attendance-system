@@ -29,15 +29,15 @@ const RegForm = () => {
   //fetch data from backend
   async function fetchData() {
     try {
-      const result = await axios(GET_URL, { params: { rfid: "" } });
-
+      const result = await axios(GET_URL);
       // if there is rfid present
-      if (result.data.rfid) setDetails(result.data);
+      if (result.data) setDetails(result.data);
+      console.log(result.data);
     } catch (e) {
       console.log(e);
     }
   }
-  console.log(details);
+
 
   const inputEvent = (event) => {
     let value = event.target.value;
@@ -57,8 +57,7 @@ const RegForm = () => {
 
   const updateEvent = async (event) => {
     try {
-      const res = await axios.post(UPDATE_URL, details);
-      console.log(res);
+      if(details.rfid){let res = await axios.post(UPDATE_URL, details);}
     } catch (e) {
       console.error(e);
     }

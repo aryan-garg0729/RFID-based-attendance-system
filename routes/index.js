@@ -9,39 +9,51 @@ router.get("/", function (req, res) {
 });
 
 // -----------------------Admin side MCU requests here---------------------------
-
+// takes rfid and returns all details
 let previousRfidData = {};
-
-// takes rfid and returns details by rfid
-//is route pe infinitely times call hogi
-router.get("/admin/findByRfid", async function (req, res) {
+router.post('/admin',async function(req,res){
   try {
-    const emptyObj = {};
-    const rfid = String(req.query.rfid);
-    //rfid  previous se match nahi hogi ya empty nahi hogi (bcz i am send rfid="" from backend infinitely)
-    if (rfid != "") {
-      // const rfid = String(req.query.rfid); // got the rfid
-      let data = await userModel.findOne({ rfid: rfid });
-      previousRfidData = {
+    let rfid = req.body.rfid; // got the rfid
+    const data = await userModel.findOne({rfid : rfid})
+    
+    if(!data){
+      previousRfidData={
         name: "",
         rfid: rfid,
         roll_no: "",
         checkedIn: "",
         expiry_date: "",
         entries: [],
-      };
-      if (!data) {
-        res.status(404).send({ message: "User Not Found" }); //send only rfid if data not found
-      } else {
-        previousRfidData = data; //storing data  as cache
-        res.status(200).send({ message: "User Found" });
-      } // pura data hoga ya fir only rfid
-    } else if (rfid == "" && Object.keys(previousRfidData).length > 0) {
-      //rfid nahi hai but previous rfid data hai
-      const data = previousRfidData;
-      previousRfidData = {};
-      res.status(200).send(data);
-    } else {
+      }
+      res.status(404).send({message:"user not found"});
+    }
+    else {
+      previousRfidData=data;
+      res.status(200).send({message:"user found"});  // pura data hoga ya fir only rfid
+    }
+  } catch (e) {
+    console.error("Error finding user:", e);
+    res.status(500).send("Error finding user");
+  }
+  
+})
+
+
+
+
+// takes rfid and returns details by rfid
+//is route pe infinitely times call hogi
+router.get("/admin/findByRfid",  function (req, res) {
+  try {
+    if(Object.keys(previousRfidData).length > 0){
+      console.log(Object.keys(previousRfidData).length);
+      previousRfidData={};
+      res.status(200).send(previousRfidData);
+      
+      // previousRfidData;
+    }
+    else{
+      console.log(Object.keys(previousRfidData).length);
       res.status(304).send({ message: "Not Modified" });
     }
   } catch (e) {
@@ -196,7 +208,8 @@ router.post("/student", async (req, res) => {
     let data = await userModel
       .findOne({ rfid: rfid })
       .select("-_id rfid expiry_date checkedIn");
-
+      console.log("Backend: " + rfid);
+    console.log(data);
     if (data == null) {
       res.status(404).send({ message: "Student not registered" });
     } else if (data.expiry_date < Date.parse(time)) {
