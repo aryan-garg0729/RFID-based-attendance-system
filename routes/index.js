@@ -1,6 +1,21 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
+const { Readable } = require("stream");
 const userModel = require("./users");
+
+
+function getDateTimeObj(arg) {
+  //year month date hour minute second
+  return {
+    year: arg.getFullYear(),
+    month: arg.getMonth(),
+    date: arg.getDate(),
+    hours: arg.getHours(),
+    minutes: arg.getMinutes(),
+    seconds: arg.getSeconds(),
+  };
+}
+
 
 /* GET home page. */
 router.get("/", function (req, res) {
@@ -11,51 +26,43 @@ router.get("/", function (req, res) {
 // takes rfid and returns all details
 let previousRfidData = {};
 
-router.post('/admin',async function(req,res){
+router.post("/admin", async function (req, res) {
   try {
     let rfid = req.body.rfid; // got the rfid
-    const data = await userModel.findOne({rfid : rfid})
-    
-    if(!data){
-      previousRfidData={
-        "name": "",
-        "rfid": rfid,
-        "roll_no": "",
-        "checkedIn": "",
-        "expiry_date": "",
-        "entries": [],
-      }
-      res.status(404).send({message:"user not found"});
+    const data = await userModel.findOne({ rfid: rfid });
+
+    if (!data) {
+      previousRfidData = {
+        name: "",
+        rfid: rfid,
+        roll_no: "",
+        checkedIn: "",
+        expiry_date: "",
+        entries: [],
+      };
+      res.status(404).send({ message: "user not found" });
+    } else {
+      previousRfidData = data;
+      res.status(200).send({ message: "user found" }); // pura data hoga ya fir only rfid
     }
-    else {
-      previousRfidData=data;
-      res.status(200).send({message:"user found"});  // pura data hoga ya fir only rfid
-    }
-    
   } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send("Error finding user");
   }
-  
-})
-
-
-
-
+});
 // takes rfid and returns details by rfid
 //is route pe infinitely times call hogi
-router.get("/admin/findByRfid",  function (req, res) {
+router.get("/admin/findByRfid", function (req, res) {
   try {
-    if(Object.keys(previousRfidData).length > 0){
+    if (Object.keys(previousRfidData).length > 0) {
       // console.log(Object.keys(previousRfidData).length);
-     
+
       res.status(200).send(previousRfidData);
-      previousRfidData={};
-      
+      previousRfidData = {};
+
       // previousRfidData;
-    }
-    else{
-      console.log(Object.keys(previousRfidData).length);
+    } else {
+      // console.log(Object.keys(previousRfidData).length);
       res.status(304).send({ message: "Not Modified" });
     }
   } catch (e) {
@@ -63,29 +70,6 @@ router.get("/admin/findByRfid",  function (req, res) {
     res.status(500).send("Error finding user");
   }
 });
-
-// frontend ke paas ab rfid aa gyi
-// update and insert new student kar sakta using this
-
-// create -> student create
-// router.post("/admin/create", async function (req, res) {
-//   try {
-//     // Create a new user using the userModel
-//     const { rfid } = req.body;
-//     const std = await userModel.findOne({ rfid: rfid });
-//     if (std) {
-//       return res.status(409).send({ message: "user already exists" });
-//     }
-
-//     let data = await userModel.create(req.body);
-//     // Send back the created user object as a response
-//     res.status(201).send({ message: "User Created Successfully", data });
-//   } catch (error) {
-//     // Handle any errors that occur during user creation
-//     console.error("Error creating user:", error);
-//     res.status(500).send("Error creating user");
-//   }
-// });
 
 // create and update
 router.post("/admin/update", async (req, res) => {
@@ -150,29 +134,82 @@ router.get("/admin/fetchAll", async (req, res) => {
   }
 });
 
-// -----------------------Student side MCU requests here---------------------------
-// router.get('/allData', async (req, res) =>{
-//   try{
-//     let data = await userModel.find();
-//     console.log(data);
-//     let sendData = [];
-//     for (let i = 0; i < data.length; i++){
+// fetchAll RFID AND EXPIRY DATE
+router.get("/admin/fetchAllRfidAndExpiry", async (req, res) => {
+  try {
+    let data = await userModel.find().select("-_id rfid expiry_date");
+    if (!data) {
+      res.status(404).send({ message: "Database is Empty" });
+    }
+    res.status(200).send(data);
+  } catch (e) {
+    console.error("Error getting all user:", e);
+    res.status(500).send("Error getting all user");
+  }
+});
 
-//       sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date})
+// -----------------------Student side MCU requests here---------------------------
+// const jsonDataArray = Array.from({ length: 50 }, (_, i) => ({
+//   id: i + 1000000,
+//   name: `Data${i + 1}`,
+// }));
+
+// // Custom Readable stream to emit data in chunks with a delay
+// class ChunkedStream extends Readable {
+//   constructor(array, options) {
+//     super(options);
+//     this.array = array;
+//     this.currentIndex = 0;
+//     this.chunkSize = 10;
+//     this.chunkDelay = 5000; // Delay between each chunk in milliseconds
+//   }
+
+//   _read() {
+//     if (this.currentIndex >= this.array.length) {
+//       this.push(null); // End of data
+//       return;
 //     }
 
-//     res.status(200).send(sendData);
+//     // Push next chunk of data
+//     const chunk = this.array.slice(
+//       this.currentIndex,
+//       this.currentIndex + this.chunkSize
+//     );
+//     this.currentIndex += this.chunkSize;
+//     this.push(JSON.stringify(chunk) + "\n");
+
+//     // Add a delay before pushing the next chunk
+//     setTimeout(() => {
+//       this.push(JSON.stringify(chunk) + '\n');
+//     }, this.chunkDelay);
 //   }
-//   catch (e) {
+// }
+
+// router.get("/allData", async (req, res) => {
+//   try {
+//     // Set response headers for JSON
+//     res.writeHead(200, { "Content-Type": "application/json" });
+
+//     // Create a new instance of ChunkedStream
+//     const stream = new ChunkedStream(jsonDataArray);
+
+//     // Pipe the stream to the response
+//     stream.pipe(res);
+
+//     // When the stream ends, send a success message to the client
+//     // stream.on("end", () => {
+//     //   res.status(404).send({ message: "data has been sent successfully" }); // End the response
+//     // });
+//   } catch (e) {
 //     console.error("Error finding user:", e);
 //     res.status(500).send();
 //   }
-// })
+// });
 
 router.get("/allData", async (req, res) => {
   try {
     let page = req.query.page ? parseInt(req.query.page) : 1; // Get the requested page number from query parameters
-    let pageSize = 2; // Define the number of items per page
+    let pageSize = 100; // Define the number of items per page
 
     // Calculate the skip value based on the requested page number and page size
     let skip = (page - 1) * pageSize;
@@ -187,15 +224,12 @@ router.get("/allData", async (req, res) => {
     // if (data.size() >= 20) morepage = true;
     // data < 20 -> false
 
-    console.log(data);
+    // console.log(data);
     if (data.length == 0) {
       return res.status(404).send({ message: "done" });
     }
-    // let sendData = [];
-    // for (let i = 0; i < data.length; i++) {
-    //   sendData.push({"rfid": data[i].rfid, "expiry_date": data[i].expiry_date});
-    // }
 
+    // console.log(data);
     res.status(200).send(data);
   } catch (e) {
     console.error("Error finding user:", e);
@@ -203,29 +237,42 @@ router.get("/allData", async (req, res) => {
   }
 });
 
-// attendance h/w -> calls this route during entry and exit
-router.post("/student", async (req, res) => {
+router.get("/currentDateTime", (req, res) => {
   try {
-    let { rfid, time } = req.body;
+    res.status(200).send(getDateTimeObj(new Date()));
+    console.log("nothing");
+  } catch (error) {
+    res.status(500).send({ message: error });
+  }
+});
+// attendance h/w -> calls this route during entry and exit
+router.post("/student/store", async (req, res) => {
+  try {
+    //MONTH IS O INDEXED
+    let { rfid, year, month, date, hour, minute } = req.body;
+    const checkin_date = new Date(year, month-1, date, hour, minute);
+    checkin_date.setHours(checkin_date.getHours() + 5);
+    checkin_date.setMinutes(checkin_date.getMinutes() + 30);
+    console.log(checkin_date);
     let data = await userModel
       .findOne({ rfid: rfid })
       .select("-_id rfid expiry_date checkedIn");
-      console.log("Backend: " + rfid);
-    console.log(data);
+    // console.log("Backend: " + rfid);
+    // console.log(data);
     if (data == null) {
       res.status(404).send({ message: "Student not registered" });
-    } else if (data.expiry_date < Date.parse(time)) {
+    } else if (data.expiry_date < checkin_date) {
       res.status(403).send({ message: "Fees due" });
     } else {
-      console.log(data);
+      // console.log(data);
       data.checkedIn = !data.checkedIn;
       var type = data.checkedIn ? "CheckIn" : "CheckOut";
-      let newEntry = { entry_type: type, time: time };
+      let newEntry = { entry_type: type, time: checkin_date };
       let upd = await userModel.updateOne(
         { rfid: rfid },
         { $push: { entries: newEntry }, $set: { checkedIn: data.checkedIn } }
       );
-      res.status(200).send(upd);
+      res.status(200).send({"message" : "user found"});
     }
   } catch (e) {
     console.error("Error finding user:", e);
