@@ -50,6 +50,13 @@ void loop() {
   if (rfid == ""){
     return; 
   }
+  if(WiFi.status() != WL_CONNECTED){
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+  }
   sendToBackend();
   delay(2000);
 
