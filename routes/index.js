@@ -1,7 +1,9 @@
 const express = require("express");
-const router = express.Router();
-const { Readable } = require("stream");
+// const { Readable } = require("stream");
+
 const userModel = require("./users");
+const router = express.Router();
+const io = require('./websocket');
 
 
 function getDateTimeObj(arg) {
@@ -16,7 +18,6 @@ function getDateTimeObj(arg) {
   };
 }
 
-
 /* GET home page. */
 router.get("/", function (req, res) {
   res.render("index");
@@ -25,12 +26,12 @@ router.get("/", function (req, res) {
 // -----------------------Admin side MCU requests here---------------------------
 // takes rfid and returns all details
 let previousRfidData = {};
-
 router.post("/admin", async function (req, res) {
   try {
     let rfid = req.body.rfid; // got the rfid
     const data = await userModel.findOne({ rfid: rfid });
 
+    //either sending whole data or rfid only
     if (!data) {
       previousRfidData = {
         name: "",
@@ -43,33 +44,17 @@ router.post("/admin", async function (req, res) {
       res.status(404).send({ message: "user not found" });
     } else {
       previousRfidData = data;
-      res.status(200).send({ message: "user found" }); // pura data hoga ya fir only rfid
+      res.status(200).send({ message: "user found" });
     }
+    //emitting searched data to frontend
+    io.emit("scannedRfidData", previousRfidData);
   } catch (e) {
     console.error("Error finding user:", e);
     res.status(500).send("Error finding user");
   }
 });
-// takes rfid and returns details by rfid
-//is route pe infinitely times call hogi
-router.get("/admin/findByRfid", function (req, res) {
-  try {
-    if (Object.keys(previousRfidData).length > 0) {
-      // console.log(Object.keys(previousRfidData).length);
 
-      res.status(200).send(previousRfidData);
-      previousRfidData = {};
 
-      // previousRfidData;
-    } else {
-      // console.log(Object.keys(previousRfidData).length);
-      res.status(304).send({ message: "Not Modified" });
-    }
-  } catch (e) {
-    console.error("Error finding user:", e);
-    res.status(500).send("Error finding user");
-  }
-});
 
 // create and update
 router.post("/admin/update", async (req, res) => {
@@ -250,7 +235,7 @@ router.post("/student/store", async (req, res) => {
   try {
     //MONTH IS O INDEXED
     let { rfid, year, month, date, hour, minute } = req.body;
-    const checkin_date = new Date(year, month-1, date, hour, minute);
+    const checkin_date = new Date(year, month - 1, date, hour, minute);
     checkin_date.setHours(checkin_date.getHours() + 5);
     checkin_date.setMinutes(checkin_date.getMinutes() + 30);
     console.log(checkin_date);
@@ -272,7 +257,7 @@ router.post("/student/store", async (req, res) => {
         { rfid: rfid },
         { $push: { entries: newEntry }, $set: { checkedIn: data.checkedIn } }
       );
-      res.status(200).send({"message" : "user found"});
+      res.status(200).send({ message: "user found" });
     }
   } catch (e) {
     console.error("Error finding user:", e);

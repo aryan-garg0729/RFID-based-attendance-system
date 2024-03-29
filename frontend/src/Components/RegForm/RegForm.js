@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./RegForm.css";
+import io from "socket.io-client";
+
+
 
 const GET_URL = "http://localhost:4000/admin/findByRfid";
 const UPDATE_URL = "http://localhost:4000/admin/update";
@@ -18,26 +21,31 @@ const RegForm = () => {
     entries: [],
   });
 
+  const [socket, setSocket] = useState(null);
+
+  //connecting to server
   useEffect(() => {
-    // fetchData() will run every sec;
-    console.log("running useEffect");
-    const interval = setInterval(fetchData, 2000);
-    return () => {
-      clearInterval(interval);
-    };
+    const newSocket = io.connect("http://localhost:5000");
+    setSocket(newSocket);
+
+    return () => newSocket.close();
   }, []);
-  //fetch data from backend
-  async function fetchData() {
-    try {
-      let result = await axios(GET_URL);
-      // if there is rfid present
-      if (result.data) setDetails(result.data);
-      result.data={};
-      // console.log(result.data);
-    } catch (e) {
-      console.log("err");
+
+  //listening to server
+  useEffect(() => {
+    if (socket) {
+      //Testing the Connection
+      socket.on("test-connection", (message) => {
+        console.log(`SocketIO connection established`);
+        console.log(message);
+      });
+
+      socket.on("scannedRfidData", (data) => {
+        console.log("scannedRfidData Received from server:", data);
+        setDetails(data);
+      });
     }
-  }
+  }, [socket]);
 
 
   const inputEvent = (event) => {
@@ -53,12 +61,14 @@ const RegForm = () => {
   //form's default action webpage is refreshing the webpage hence we lost the user value
   const actionSubmit = (event) => {
     event.preventDefault();
-    console.log(details);
+    // console.log(details);
   };
 
   const updateEvent = async (event) => {
     try {
-      if(details.rfid){let res = await axios.post(UPDATE_URL, details);}
+      if (details.rfid) {
+        let res = await axios.post(UPDATE_URL, details);
+      }
     } catch (e) {
       console.error(e);
     }
