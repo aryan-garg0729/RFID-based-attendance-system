@@ -3,8 +3,7 @@ const express = require("express");
 
 const userModel = require("./users");
 const router = express.Router();
-const io = require('./websocket');
-
+const io = require("./websocket");
 
 function getDateTimeObj(arg) {
   //year month date hour minute second
@@ -54,13 +53,14 @@ router.post("/admin", async function (req, res) {
   }
 });
 
-
-
 // create and update
 router.post("/admin/update", async (req, res) => {
   try {
     // findandUpdate
     let rfid = req.body.rfid;
+    if (!req.body.expiry_date) {
+      req.body.expiry_date = new Date(Date.now() + 2592000000);
+    }
     const std = await userModel.findOne({ rfid: rfid });
     //if user not found then create a new user
     if (!std) {
@@ -93,6 +93,7 @@ router.delete("/admin/delete", async (req, res) => {
   try {
     let rfid = req.body.rfid;
     let data = await userModel.findOne({ rfid: rfid });
+
     if (!data) {
       res.status(404).send({ message: "User doesn't exist" });
     } else {
