@@ -170,6 +170,11 @@ const RegForm = () => {
             </button>
           </div>
         </form>
+
+      </div>
+
+      <div className="masters">
+        
       </div>
     </>
   );

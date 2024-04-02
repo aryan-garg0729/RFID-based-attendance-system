@@ -30,6 +30,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String LOCALHOST = "http://192.168.98.144:4000";
 String SERVER_NAME = LOCALHOST + "/student";
 String STORE = LOCALHOST + "/student/store";
+String MASTER = LOCALHOST + "/student/master/get";
 String rfid = ""; // Variable to store the detected RFID UID
 JsonArray arr;
 
@@ -52,7 +53,7 @@ int sendToBackend();
 bool checkExpiry(int expDate[]);
 int logAndAuth();
 void readAllDataFromFile(String path);
-
+void getMasters();
 void setup()
 {
   // Set CPU frequency to 160MHz
@@ -77,9 +78,10 @@ void setup()
     // getalldata from database if wifi is connected
     if (WiFi.status() == WL_CONNECTED)
     {
-      // getAllData();
-      gotdata = 1;
+      getAllData();
+      // gotdata = 1;
       setcurrdatetime();
+      getMasters();
     }
   }
 
@@ -254,6 +256,32 @@ void getAllData()
 
   // Free resources
   http.end();
+}
+
+
+// CHECK IT ON HARDWARE !!!
+// JUST BASIC CODE , NEEDS TO BE EDITED !!!
+void getMasters(){
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+
+    http.begin(MASTER);
+
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+      if (httpCode == HTTP_CODE_OK) {
+        String payload = http.getString();
+        Serial.println("Response:");
+        Serial.println(payload);
+      }
+    } else {
+      Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
+    }
+
+    http.end();
+  } else {
+    Serial.println("WiFi not connected");
+  }
 }
 
 // FETCH CURRENT DATE AND TIME FROM SERVER IN 5 RETRY (or use default one)
@@ -698,3 +726,8 @@ void formatSPIFFS()
     Serial.println("Error formatting SPIFFS!");
   }
 }
+
+
+
+
+

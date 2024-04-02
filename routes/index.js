@@ -136,7 +136,6 @@ router.get("/admin/fetchAllRfidAndExpiry", async (req, res) => {
 
 // add master card
 router.post('/admin/master/create', (req, res) => {
-  // Assuming the RFID is sent in the request body as { "rfid": "your_rfid_code" }
   const { rfid } = req.body;
 
   // Read the JSON file
@@ -223,6 +222,35 @@ router.post('/admin/master/delete', (req, res) => {
           }
           res.json({ message: 'RFID deleted successfully' });
       });
+  });
+});
+
+
+// get the master rfids
+router.get('/student/master/get', (req, res) => {
+  // Read the JSON file
+  fs.readFile('master_rfids.json', 'utf8', (err, data) => {
+      if (err) {
+          console.error('Error reading file:', err);
+          res.status(500).json({ error: 'Internal server error' });
+          return;
+      }
+
+      let masterRfids = [];
+      try {
+          masterRfids = JSON.parse(data);
+      } catch (error) {
+          console.error('Error parsing JSON:', error);
+          res.status(500).json({ error: 'Internal server error' });
+          return;
+      }
+
+      // If there are fewer than three RFIDs, pad the array with "***"
+      while (masterRfids.length < 3) {
+          masterRfids.push('***');
+      }
+
+      res.json(masterRfids.slice(0, 3));
   });
 });
 
