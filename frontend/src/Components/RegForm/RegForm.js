@@ -101,6 +101,7 @@ const RegForm = () => {
   return (
     <>
       <div className="formDiv">
+        <div className="form-container">
         <form onSubmit={actionSubmit}>
           <label htmlFor="rfid">RFID Tag ID</label>
           <input
@@ -170,12 +171,30 @@ const RegForm = () => {
             </button>
           </div>
         </form>
-
+        </div>
+        <div className="master-list">
+          <div className="master">
+              <span  className={1? "todo-text todo-completed" : "todo-text"}>
+                rfid1
+              </span>
+              <button >delete</button>
+          </div>
+          <div className="master">
+              <span  className={1? "todo-text todo-completed" : "todo-text"}>
+                rfid2
+              </span>
+              <button >delete</button>
+          </div>
+          <div className="master">
+              <span  className={1? "todo-text todo-completed" : "todo-text"}>
+                rfid3
+              </span>
+              <button >delete</button>
+          </div>
+        </div>
       </div>
 
-      <div className="masters">
-        
-      </div>
+      
     </>
   );
 };
