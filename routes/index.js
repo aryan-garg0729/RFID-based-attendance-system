@@ -1,6 +1,6 @@
 const express = require("express");
 // const { Readable } = require("stream");
-
+const fs = require('fs');
 const userModel = require("./users");
 const router = express.Router();
 const io = require('./websocket');
@@ -131,6 +131,98 @@ router.get("/admin/fetchAllRfidAndExpiry", async (req, res) => {
     console.error("Error getting all user:", e);
     res.status(500).send("Error getting all user");
   }
+});
+
+// add master card
+router.post('/admin/master/create', (req, res) => {
+  // Assuming the RFID is sent in the request body as { "rfid": "your_rfid_code" }
+  const { rfid } = req.body;
+
+  // Read the JSON file
+  fs.readFile('master_rfids.json', 'utf8', (err, data) => {
+      if (err) {
+          console.error('Error reading file:', err);
+          res.status(500).json({ error: 'Internal server error' });
+          return;
+      }
+
+      let masterRfids = [];
+      try {
+          masterRfids = JSON.parse(data);
+      } catch (error) {
+          console.error('Error parsing JSON:', error);
+          res.status(500).json({ error: 'Internal server error' });
+          return;
+      }
+
+      // Check if there are already three master RFIDs
+      if (masterRfids.length >= 3) {
+          res.status(400).json({ error: 'Maximum number of master RFIDs reached' });
+          return;
+      }
+
+      // Check if the RFID already exists
+      if (masterRfids.includes(rfid)) {
+          res.status(400).json({ error: 'RFID already exists' });
+          return;
+      }
+
+      // Add the new RFID
+      masterRfids.push(rfid);
+
+      // Write the updated list back to the file
+      fs.writeFile('master_rfids.json', JSON.stringify(masterRfids), 'utf8', err => {
+          if (err) {
+              console.error('Error writing file:', err);
+              res.status(500).json({ error: 'Internal server error' });
+              return;
+          }
+          res.json({ message: 'RFID added successfully' });
+      });
+  });
+});
+
+// delete a master card
+router.post('/admin/master/delete', (req, res) => {
+  const { rfid } = req.body;
+
+  // Read the JSON file
+  fs.readFile('master_rfids.json', 'utf8', (err, data) => {
+      if (err) {
+          console.error('Error reading file:', err);
+          res.status(500).json({ error: 'Internal server error' });
+          return;
+      }
+
+      let masterRfids = [];
+      try {
+          masterRfids = JSON.parse(data);
+      } catch (error) {
+          console.error('Error parsing JSON:', error);
+          res.status(500).json({ error: 'Internal server error' });
+          return;
+      }
+
+      // Check if the RFID already exists
+      const index = masterRfids.indexOf(rfid);
+      if (index === -1) {
+          res.status(400).json({ error: 'RFID does not exist' });
+          return;
+      }
+
+      // Remove the RFID
+      masterRfids.splice(index, 1);
+
+      // Write the updated list back to the file
+      fs.writeFile('master_rfids.json', JSON.stringify(masterRfids), 'utf8', err => {
+          if (err) {
+              console.error('Error writing file:', err);
+              res.status(500).json({ error: 'Internal server error' });
+              return;
+          }
+          res.json({ message: 'RFID deleted successfully' });
+      });
+  });
 });
 
 // -----------------------Student side MCU requests here---------------------------
