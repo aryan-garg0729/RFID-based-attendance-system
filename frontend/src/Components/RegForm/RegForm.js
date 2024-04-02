@@ -4,10 +4,9 @@ import "./RegForm.css";
 import io from "socket.io-client";
 
 
-
 const GET_URL = "http://localhost:4000/admin/findByRfid";
 const UPDATE_URL = "http://localhost:4000/admin/update";
-// const DELETE_URL = "http://localhost:4000/admin/delete";
+const DELETE_URL = "http://localhost:4000/admin/delete";
 
 const RegForm = () => {
   //   const [fetchedData, setFetchedData] = useState({});
@@ -47,7 +46,7 @@ const RegForm = () => {
     }
   }, [socket]);
 
-
+  // const notify = (mes) => ;
   const inputEvent = (event) => {
     let value = event.target.value;
     let name = event.target.name;
@@ -68,14 +67,37 @@ const RegForm = () => {
     try {
       if (details.rfid) {
         let res = await axios.post(UPDATE_URL, details);
+        window.alert("Updated successfully");
+        
+      }
+    } catch (e) {
+      console.error(e);
+      // notify("error");
+    }
+  };
+  const deleteEvent = async (event) => {
+    try {
+      if (details.rfid) {
+        // console.log(details);
+        let res = await axios.delete(DELETE_URL, {
+          data: {
+            rfid: details.rfid,
+          },
+        });
+        setDetails({
+          _id: "",
+          name: "",
+          roll_no: "",
+          checkedIn: "",
+          expiry_date: "",
+          entries: [],
+        })
+        window.alert("Deleted successfully");
       }
     } catch (e) {
       console.error(e);
     }
   };
-  //   const deleteEvent = (event) =>{
-
-  //   }
   return (
     <>
       <div className="formDiv">
@@ -142,6 +164,7 @@ const RegForm = () => {
               type="submit"
               className="btn deleteButton"
               id="deleteButton"
+              onClick={deleteEvent}
             >
               Delete
             </button>
