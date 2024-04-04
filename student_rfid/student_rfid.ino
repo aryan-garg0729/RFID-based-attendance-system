@@ -7,15 +7,15 @@
 #include <FS.h>
 
 // CONSTANTS FOR WIFI CONNECTION
-const char *SSID = "S10";
-const char *PASSWORD = "fomn1596";
+const char *SSID = "NSUT_WIFI";
+const char *PASSWORD = "";
 
 unsigned long lastMillis = 0;
 const unsigned long interval = 1000; // 1 second interval to update time every second
 int DEFAULT_TIME[3] = {7, 0, 0};     // HOURS MINUTES SECONDS
 int CURR_TIME[3] = {0, 0, 0};
 int CURR_DATE[3] = {1970, 1, 1}; // YEAR MONTH DATE
-bool gotCurrDateAndTime = false;
+
 
 // Constants for file paths
 const char *DATABASE_FILE_PATH = "/database.txt"; // RFID EXP_YEAR EXP_MONTH EXP_DATE
@@ -27,7 +27,7 @@ const char *FILE_POINTER_FILE = "/filepointer.txt";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
-String LOCALHOST = "http://192.168.98.144:4000";
+String LOCALHOST = "http://10.100.255.31:4000";
 String SERVER_NAME = LOCALHOST + "/student";
 String STORE = LOCALHOST + "/student/store";
 String MASTER = LOCALHOST + "/student/master/get";
@@ -36,12 +36,18 @@ JsonArray arr;
 
 bool iswifi = false;
 bool gotdata = false;
+bool gotCurrDateAndTime = false;
+bool gotmasters = false;
 bool isSpiFFS = false;
+
+String masters[3];
 
 // MY 14 FUNCTIONS (IN ORDER)
 bool connectToWifi();
 void initializeSPIFFS();
 void getAllData();
+void extractStrings(String payload);
+void getMasters();
 void setcurrdatetime();
 void updateTime();
 String getRfid();
@@ -53,22 +59,27 @@ int sendToBackend();
 bool checkExpiry(int expDate[]);
 int logAndAuth();
 void readAllDataFromFile(String path);
-void getMasters();
+void formatSPIFFS();
+
 void setup()
 {
   // Set CPU frequency to 160MHz
   // system_update_cpu_freq(SYS_CPU_160MHZ);
-
+   
   pinMode(D0, OUTPUT); // red
   pinMode(D1, OUTPUT); // yellow
   pinMode(D2, OUTPUT); // green
   pinMode(D8, OUTPUT); // blue
+  // digitalWrite(D8,HIGH);
+
+  // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
+  // formatSPIFFS();
 
   // setting baud rate for serial communication
   Serial.begin(9600);
   delay(10);
   // ISKO INFINITY TIMES NAHI CHALALNA IF WIFI AND GETDATA NAHI MILA TO
-  while (!gotdata)
+  while (!gotdata || !gotCurrDateAndTime || !gotmasters)
   {
     iswifi = connectToWifi();
 
@@ -78,16 +89,15 @@ void setup()
     // getalldata from database if wifi is connected
     if (WiFi.status() == WL_CONNECTED)
     {
-      getAllData();
+      if(!gotdata)getAllData();
       // gotdata = 1;
-      setcurrdatetime();
-      getMasters();
+      if(!gotCurrDateAndTime)setcurrdatetime();
+      if(!gotmasters)getMasters();
     }
   }
 
   // printing database.txt file
   Serial.println("Successfully fetched and stored all data");
-  readAllDataFromFile("/B1A8891D.txt");
 
   Serial.print("current date: ");
   Serial.print(CURR_DATE[0]);
@@ -129,6 +139,14 @@ void loop()
     {
       return;
     }
+    // compare masters
+    for(int i = 0;i<3;i++){
+      if(masters[i]==rfid){
+        sendToBackend();
+        return;
+      }
+    }
+
     status = logAndAuth();
     Serial.println("");
     Serial.println(status);
@@ -139,6 +157,7 @@ void loop()
     sendToBackend();
     // sir se puchna h format file ka
   }
+
 }
 
 bool connectToWifi()
@@ -155,8 +174,7 @@ bool connectToWifi()
     Serial.println(times);
     // connecting to wifi
     WiFi.begin(SSID, PASSWORD);
-    delay(5250);
-    glowLED(500);
+    delay(7000);
     times++;
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -258,28 +276,46 @@ void getAllData()
   http.end();
 }
 
+void extractStrings(String payload) {
+  int startIdx = payload.indexOf("\"") + 1; // Find the first occurrence of "
+  int endIdx;
+  for (int i = 0; i < 3; i++) {
+    endIdx = payload.indexOf("\"", startIdx); // Find the next occurrence of "
+    if (endIdx != -1) {
+      masters[i] = payload.substring(startIdx, endIdx);
+      startIdx = payload.indexOf("\"", endIdx + 1) + 1; // Move to the next string
+    }
+  }
+}
 
-// CHECK IT ON HARDWARE !!!
-// JUST BASIC CODE , NEEDS TO BE EDITED !!!
 void getMasters(){
+  JsonDocument doc;
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-
-    http.begin(MASTER);
+    WiFiClient client;
+    http.begin(client,MASTER.c_str());
 
     int httpCode = http.GET();
+    
     if (httpCode > 0) {
       if (httpCode == HTTP_CODE_OK) {
         String payload = http.getString();
+        // Deserialize the JSON object into the JSON document
+        DeserializationError error = deserializeJson(doc, payload);
         Serial.println("Response:");
         Serial.println(payload);
+        // put into master array
+        extractStrings(payload);
+        gotmasters = true;
       }
     } else {
+      gotmasters=false;
       Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
     }
 
     http.end();
   } else {
+    gotmasters = false;
     Serial.println("WiFi not connected");
   }
 }

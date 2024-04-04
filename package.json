@@ -10,6 +10,7 @@
     "cors": "^2.8.5",
     "date-fns-tz": "^2.0.1",
     "debug": "~2.6.9",
+    "dotenv": "^16.4.5",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "http": "^0.0.1-security",
