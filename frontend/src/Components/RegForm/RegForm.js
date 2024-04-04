@@ -3,8 +3,7 @@ import axios from "axios";
 import "./RegForm.css";
 import io from "socket.io-client";
 
-
-const GET_URL = "http://localhost:4000/admin/findByRfid";
+// const GET_URL = "http://localhost:4000/admin/findByRfid";
 const UPDATE_URL = "http://localhost:4000/admin/update";
 const DELETE_URL = "http://localhost:4000/admin/delete";
 
@@ -67,8 +66,7 @@ const RegForm = () => {
     try {
       if (details.rfid) {
         let res = await axios.post(UPDATE_URL, details);
-        window.alert("Updated successfully");
-        
+        window.alert(res.data.message);
       }
     } catch (e) {
       console.error(e);
@@ -77,7 +75,7 @@ const RegForm = () => {
   };
   const deleteEvent = async (event) => {
     try {
-      if (details.rfid) {
+      if (details.rfid && window.confirm("Are u confirm to delete?")) {
         // console.log(details);
         let res = await axios.delete(DELETE_URL, {
           data: {
@@ -91,8 +89,8 @@ const RegForm = () => {
           checkedIn: "",
           expiry_date: "",
           entries: [],
-        })
-        window.alert("Deleted successfully");
+        });
+        window.alert(res.message);
       }
     } catch (e) {
       console.error(e);
@@ -102,99 +100,97 @@ const RegForm = () => {
     <>
       <div className="formDiv">
         <div className="form-container">
-        <form onSubmit={actionSubmit}>
-          <label htmlFor="rfid">RFID Tag ID</label>
-          <input
-            type="text"
-            id="rfid"
-            name="rfid"
-            onChange={inputEvent}
-            value={details.rfid}
-          />
-          <label htmlFor="name">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            onChange={inputEvent}
-            value={details.name}
-          />
-          <label htmlFor="roll_no">RollNumber</label>
-          <input
-            type="text"
-            id="roll_no"
-            name="roll_no"
-            onChange={inputEvent}
-            value={details.roll_no}
-          />
-          <label htmlFor="expiry_date">
-            Validity (default one month from now)
-          </label>
-          <input
-            type="text"
-            id="expiry_date"
-            name="expiry_date"
-            onChange={inputEvent}
-            value={details.expiry_date}
-          />
-          <label htmlFor="checkedIn">checkedIn</label>
-          <input
-            type="text"
-            id="checkedIn"
-            name="checkedIn"
-            onChange={inputEvent}
-            value={details.checkedIn}
-          />
-          <div className="buttonBox">
-            {/* <button
+          <form onSubmit={actionSubmit}>
+            <label htmlFor="rfid">RFID Tag ID</label>
+            <input
+              type="text"
+              id="rfid"
+              name="rfid"
+              onChange={inputEvent}
+              value={details.rfid}
+            />
+            <label htmlFor="name">Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              onChange={inputEvent}
+              value={details.name}
+            />
+            <label htmlFor="roll_no">RollNumber</label>
+            <input
+              type="text"
+              id="roll_no"
+              name="roll_no"
+              onChange={inputEvent}
+              value={details.roll_no}
+            />
+            <label htmlFor="expiry_date">
+              Validity (default one month from now)
+            </label>
+            <input
+              type="text"
+              id="expiry_date"
+              name="expiry_date"
+              onChange={inputEvent}
+              value={details.expiry_date}
+            />
+            <label htmlFor="checkedIn">checkedIn</label>
+            <input
+              type="text"
+              id="checkedIn"
+              name="checkedIn"
+              onChange={inputEvent}
+              value={details.checkedIn}
+            />
+            <div className="buttonBox">
+              {/* <button
               type="create"
               className="btn createButton"
               id="createButton"
             >
               Create
             </button> */}
-            <button
-              type="update"
-              className="btn updateButton"
-              id="updateButton"
-              onClick={updateEvent}
-            >
-              Update
-            </button>
-            <button
-              type="submit"
-              className="btn deleteButton"
-              id="deleteButton"
-              onClick={deleteEvent}
-            >
-              Delete
-            </button>
-          </div>
-        </form>
+              <button
+                type="update"
+                className="btn updateButton"
+                id="updateButton"
+                onClick={updateEvent}
+              >
+                Update
+              </button>
+              <button
+                type="submit"
+                className="btn deleteButton"
+                id="deleteButton"
+                onClick={deleteEvent}
+              >
+                Delete
+              </button>
+            </div>
+          </form>
         </div>
         <div className="master-list">
           <div className="master">
-              <span  className={1? "todo-text todo-completed" : "todo-text"}>
-                rfid1
-              </span>
-              <button >delete</button>
+            <span className={1 ? "todo-text todo-completed" : "todo-text"}>
+              rfid1
+            </span>
+            <button>delete</button>
           </div>
           <div className="master">
-              <span  className={1? "todo-text todo-completed" : "todo-text"}>
-                rfid2
-              </span>
-              <button >delete</button>
+            <span className={1 ? "todo-text todo-completed" : "todo-text"}>
+              rfid2
+            </span>
+            <button>delete</button>
           </div>
           <div className="master">
-              <span  className={1? "todo-text todo-completed" : "todo-text"}>
-                rfid3
-              </span>
-              <button >delete</button>
+            <span className={1 ? "todo-text todo-completed" : "todo-text"}>
+              rfid3
+            </span>
+            <button>delete</button>
           </div>
         </div>
       </div>
-
-      
     </>
   );
 };

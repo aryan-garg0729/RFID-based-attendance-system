@@ -57,14 +57,15 @@ router.post("/admin", async function (req, res) {
 router.post("/admin/update", async (req, res) => {
   try {
     // findandUpdate
-    let rfid = req.body.rfid;
-    if (!req.body.expiry_date) {
-      req.body.expiry_date = new Date(Date.now() + 2592000000);
+    let {rfid, name, roll_no, checkedIn, expiry_date} = req.body;
+   
+    if (!expiry_date) {
+      expiry_date = new Date(Date.now() + 2592000000);
     }
     const std = await userModel.findOne({ rfid: rfid });
     //if user not found then create a new user
     if (!std) {
-      let data = await userModel.create(req.body);
+      let data = await userModel.create({rfid, name, roll_no, checkedIn, expiry_date});
       // Send back the created user object as a response
       res.status(201).send({ message: "New User Created Successfully", data });
     } else {
@@ -73,10 +74,10 @@ router.post("/admin/update", async (req, res) => {
         { rfid: rfid },
         {
           $set: {
-            name: req.body.name,
-            roll_no: req.body.roll_no,
-            checkedIn: req.body.checkedIn,
-            expiry_date: req.body.expiry_date,
+            name: name,
+            roll_no: roll_no,
+            checkedIn: checkedIn,
+            expiry_date: expiry_date,
           },
         }
       );
