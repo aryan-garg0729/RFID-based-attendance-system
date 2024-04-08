@@ -1,9 +1,9 @@
 const express = require("express");
-// const { Readable } = require("stream");
-const fs = require('fs');
-const userModel = require("./users");
+
+const userModel = require("./userModel");
 const router = express.Router();
 const io = require("./websocket");
+const exp = require("constants");
 
 function getDateTimeObj(arg) {
   //year month date hour minute second
@@ -57,15 +57,22 @@ router.post("/admin", async function (req, res) {
 router.post("/admin/update", async (req, res) => {
   try {
     // findandUpdate
-    let {rfid, name, roll_no, checkedIn, expiry_date} = req.body;
-   
+    let { rfid, name, roll_no, checkedIn, expiry_date } = req.body;
+
+    expiry_date = new Date(expiry_date).toISOString();
     if (!expiry_date) {
       expiry_date = new Date(Date.now() + 2592000000);
     }
     const std = await userModel.findOne({ rfid: rfid });
     //if user not found then create a new user
     if (!std) {
-      let data = await userModel.create({rfid, name, roll_no, checkedIn, expiry_date});
+      let data = await userModel.create({
+        rfid,
+        name,
+        roll_no,
+        checkedIn,
+        expiry_date,
+      });
       // Send back the created user object as a response
       res.status(201).send({ message: "New User Created Successfully", data });
     } else {
@@ -135,183 +142,9 @@ router.get("/admin/fetchAllRfidAndExpiry", async (req, res) => {
   }
 });
 
-// add master card
-router.post('/admin/master/create', (req, res) => {
-  const { rfid } = req.body;
-
-  // Read the JSON file
-  fs.readFile('master_rfids.json', 'utf8', (err, data) => {
-      if (err) {
-          console.error('Error reading file:', err);
-          res.status(500).json({ error: 'Internal server error' });
-          return;
-      }
-
-      let masterRfids = [];
-      try {
-          masterRfids = JSON.parse(data);
-      } catch (error) {
-          console.error('Error parsing JSON:', error);
-          res.status(500).json({ error: 'Internal server error' });
-          return;
-      }
-
-      // Check if there are already three master RFIDs
-      if (masterRfids.length >= 3) {
-          res.status(400).json({ error: 'Maximum number of master RFIDs reached' });
-          return;
-      }
-
-      // Check if the RFID already exists
-      if (masterRfids.includes(rfid)) {
-          res.status(400).json({ error: 'RFID already exists' });
-          return;
-      }
-
-      // Add the new RFID
-      masterRfids.push(rfid);
-
-      // Write the updated list back to the file
-      fs.writeFile('master_rfids.json', JSON.stringify(masterRfids), 'utf8', err => {
-          if (err) {
-              console.error('Error writing file:', err);
-              res.status(500).json({ error: 'Internal server error' });
-              return;
-          }
-          res.json({ message: 'RFID added successfully' });
-      });
-  });
-});
-
-// delete a master card
-router.post('/admin/master/delete', (req, res) => {
-  const { rfid } = req.body;
-
-  // Read the JSON file
-  fs.readFile('master_rfids.json', 'utf8', (err, data) => {
-      if (err) {
-          console.error('Error reading file:', err);
-          res.status(500).json({ error: 'Internal server error' });
-          return;
-      }
-
-      let masterRfids = [];
-      try {
-          masterRfids = JSON.parse(data);
-      } catch (error) {
-          console.error('Error parsing JSON:', error);
-          res.status(500).json({ error: 'Internal server error' });
-          return;
-      }
-
-      // Check if the RFID already exists
-      const index = masterRfids.indexOf(rfid);
-      if (index === -1) {
-          res.status(400).json({ error: 'RFID does not exist' });
-          return;
-      }
-
-      // Remove the RFID
-      masterRfids.splice(index, 1);
-
-      // Write the updated list back to the file
-      fs.writeFile('master_rfids.json', JSON.stringify(masterRfids), 'utf8', err => {
-          if (err) {
-              console.error('Error writing file:', err);
-              res.status(500).json({ error: 'Internal server error' });
-              return;
-          }
-          res.json({ message: 'RFID deleted successfully' });
-      });
-  });
-});
-
-
-// get the master rfids
-router.get('/student/master/get', (req, res) => {
-  // Read the JSON file
-  fs.readFile('master_rfids.json', 'utf8', (err, data) => {
-      if (err) {
-          console.error('Error reading file:', err);
-          res.status(500).json({ error: 'Internal server error' });
-          return;
-      }
-
-      let masterRfids = [];
-      try {
-          masterRfids = JSON.parse(data);
-      } catch (error) {
-          console.error('Error parsing JSON:', error);
-          res.status(500).json({ error: 'Internal server error' });
-          return;
-      }
-
-      // If there are fewer than three RFIDs, pad the array with "***"
-      while (masterRfids.length < 3) {
-          masterRfids.push('***');
-      }
-
-      res.json(masterRfids.slice(0, 3));
-  });
-});
 
 // -----------------------Student side MCU requests here---------------------------
-// const jsonDataArray = Array.from({ length: 50 }, (_, i) => ({
-//   id: i + 1000000,
-//   name: `Data${i + 1}`,
-// }));
 
-// // Custom Readable stream to emit data in chunks with a delay
-// class ChunkedStream extends Readable {
-//   constructor(array, options) {
-//     super(options);
-//     this.array = array;
-//     this.currentIndex = 0;
-//     this.chunkSize = 10;
-//     this.chunkDelay = 5000; // Delay between each chunk in milliseconds
-//   }
-
-//   _read() {
-//     if (this.currentIndex >= this.array.length) {
-//       this.push(null); // End of data
-//       return;
-//     }
-
-//     // Push next chunk of data
-//     const chunk = this.array.slice(
-//       this.currentIndex,
-//       this.currentIndex + this.chunkSize
-//     );
-//     this.currentIndex += this.chunkSize;
-//     this.push(JSON.stringify(chunk) + "\n");
-
-//     // Add a delay before pushing the next chunk
-//     setTimeout(() => {
-//       this.push(JSON.stringify(chunk) + '\n');
-//     }, this.chunkDelay);
-//   }
-// }
-
-// router.get("/allData", async (req, res) => {
-//   try {
-//     // Set response headers for JSON
-//     res.writeHead(200, { "Content-Type": "application/json" });
-
-//     // Create a new instance of ChunkedStream
-//     const stream = new ChunkedStream(jsonDataArray);
-
-//     // Pipe the stream to the response
-//     stream.pipe(res);
-
-//     // When the stream ends, send a success message to the client
-//     // stream.on("end", () => {
-//     //   res.status(404).send({ message: "data has been sent successfully" }); // End the response
-//     // });
-//   } catch (e) {
-//     console.error("Error finding user:", e);
-//     res.status(500).send();
-//   }
-// });
 
 router.get("/allData", async (req, res) => {
   try {
@@ -360,7 +193,7 @@ router.post("/student/store", async (req, res) => {
     const checkin_date = new Date(year, month - 1, date, hour, minute);
     checkin_date.setHours(checkin_date.getHours() + 5);
     checkin_date.setMinutes(checkin_date.getMinutes() + 30);
-    console.log(checkin_date);
+    // console.log(checkin_date);
     let data = await userModel
       .findOne({ rfid: rfid })
       .select("-_id rfid expiry_date checkedIn");

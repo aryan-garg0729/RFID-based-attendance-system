@@ -10,6 +10,7 @@ table td,
 table th {
   border: 1px solid #ddd;
   padding: 8px;
+  width: 13rem;
   /* border-radius: 20px; */
 }
 

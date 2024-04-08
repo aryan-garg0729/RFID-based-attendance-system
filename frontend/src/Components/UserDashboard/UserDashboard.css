@@ -1,0 +1,88 @@
+.dash-wrapper {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(189, 189, 189, 0.8);
+}
+.dash-wrapper * {
+  margin: 2px;
+}
+.dash-container {
+  position: absolute;
+  width: 80vw;
+  border-radius: 10px;
+  background-color: white;
+  padding: 2rem 2.5rem;
+  margin-top: 1rem;
+  overflow: hidden;
+}
+.dash-header {
+  display: block;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  margin: 0;
+  background-color: rgba(98, 141, 214, 0.813);
+  overflow: hidden;
+  font-weight: 600;
+}
+.dash-header .close-btn {
+  position: absolute;
+  right: 0;
+  display: inline-block;
+  width: 3rem;
+  background-color: red;
+  margin: 0;
+  border: none;
+  border-top-right-radius: 10px;
+  color: white;
+  font-weight: 600;
+}
+.dash-container hr {
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+.detail-section {
+  display: flex;
+}
+.dash-details {
+  flex-basis: 60%;
+}
+.dash-details span {
+  display: inline-block;
+  min-width: 10rem;
+}
+.dash-buttons {
+  flex-basis: 40%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.entry-section div {
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-around;
+  outline: 1px solid white;
+}
+.entry-section div.checkIn {
+  border: 1px solid rgba(0, 255, 76, 0.8);
+  background-color: rgba(0, 255, 76, 0.1);
+}
+.entry-section div.checkOut {
+  border: 1px solid rgba(255, 0, 0, 0.8);
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+@media screen and (width <= 680px) {
+  .detail-section {
+    flex-direction: column;
+  }
+}

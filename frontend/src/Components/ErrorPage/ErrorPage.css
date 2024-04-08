@@ -1,0 +1,33 @@
+.error-container {
+  width: 100vw;
+  height: 80vh;
+  text-align: center;
+  color: rgb(32, 29, 29);
+}
+.error-message {
+  height: 70%;
+  width: 70%;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow-dark);
+  padding: 1rem;
+}
+.error404 {
+  font-size: 5rem;
+}
+
+.error-link {
+  margin-top: 3rem;
+}
+.error-homeLink {
+  text-decoration: none;
+  color: var(--white-color);
+  background-color: var(--primary-color);
+  padding: 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.error-homeLink:hover {
+  box-shadow: var(--box-shadow-light);
+  background-color: rgb(98, 194, 242);
+}

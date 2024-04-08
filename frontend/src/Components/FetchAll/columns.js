@@ -1,5 +1,6 @@
 export const COLUMNS = [
     {
+        id:'rfid',
         Header : 'RFID',
         accessor : 'rfid'
     },

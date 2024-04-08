@@ -1,32 +1,41 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./RegForm.css";
+import errorToast from "../Prompts/ErrorToast";
+import { toast } from "react-toastify";
+import MasterCardSection from "./MasterSection/MasterCardSection";
 import io from "socket.io-client";
+import "./RegForm.css";
+import ConfirmationModal from "../Prompts/ConfirmationModal";
 
-// const GET_URL = "http://localhost:4000/admin/findByRfid";
 const UPDATE_URL = "http://localhost:4000/admin/update";
 const DELETE_URL = "http://localhost:4000/admin/delete";
 
 const RegForm = () => {
   //   const [fetchedData, setFetchedData] = useState({});
-  const [details, setDetails] = useState({
+  const defaultDetails = {
     _id: "",
     name: "",
     rfid: "",
     roll_no: "",
-    checkedIn: "",
-    expiry_date: "",
+    checkedIn: false,
+    expiry_date: new Date(Date.now() + 2592000000).toISOString().slice(0, 10),
     entries: [],
-  });
+  };
 
+  const [details, setDetails] = useState(defaultDetails);
   const [socket, setSocket] = useState(null);
-
+  const [showModal, setShowModal] = useState(false);
   //connecting to server
   useEffect(() => {
-    const newSocket = io.connect("http://localhost:5000");
-    setSocket(newSocket);
+    try {
+      const newSocket = io.connect("http://localhost:5000");
+      setSocket(newSocket);
 
-    return () => newSocket.close();
+      return () => newSocket.close();
+    } catch (error) {
+      console.error("Error connecting server:", error);
+      errorToast(error.name, error.message);
+    }
   }, []);
 
   //listening to server
@@ -45,7 +54,12 @@ const RegForm = () => {
     }
   }, [socket]);
 
-  // const notify = (mes) => ;
+  const handleShowModal = () => {
+    if (details.name && details.roll_no && details.rfid) setShowModal(true);
+  };
+  // close confirmation Modal
+  const closeModal = () => setShowModal(false);
+  //prevent default form submit action
   const inputEvent = (event) => {
     let value = event.target.value;
     let name = event.target.name;
@@ -62,133 +76,143 @@ const RegForm = () => {
     // console.log(details);
   };
 
+  //update or create student info
   const updateEvent = async (event) => {
     try {
       if (details.rfid) {
-        let res = await axios.post(UPDATE_URL, details);
-        window.alert(res.data.message);
+        const res = await axios.post(UPDATE_URL, details);
+        toast(`${res.status} | ${res.data.message}`);
       }
-    } catch (e) {
-      console.error(e);
-      // notify("error");
+    } catch (error) {
+      console.error("Error updating detail:", error);
+      errorToast(error.name, error.message);
     }
   };
+
+  //delete student
   const deleteEvent = async (event) => {
     try {
-      if (details.rfid && window.confirm("Are u confirm to delete?")) {
-        // console.log(details);
-        let res = await axios.delete(DELETE_URL, {
-          data: {
-            rfid: details.rfid,
-          },
-        });
-        setDetails({
-          _id: "",
-          name: "",
-          roll_no: "",
-          checkedIn: "",
-          expiry_date: "",
-          entries: [],
-        });
-        window.alert(res.message);
-      }
-    } catch (e) {
-      console.error(e);
+      let res = await axios.delete(DELETE_URL, {
+        data: {
+          rfid: details.rfid,
+        },
+      });
+      setDetails(defaultDetails);
+      toast(`${res.status} | ${res.data.message}`);
+    } catch (error) {
+      console.error("Error deleting detail:", error);
+      errorToast(error.name, error.message);
     }
   };
   return (
     <>
+      {/* confirmation Modal */}
+      {showModal && details.name && details.roll_no && details.rfid && (
+        <ConfirmationModal onCancel={closeModal} onConfirm={deleteEvent} />
+      )}
+      {/* MASTERS RFID SECTION */}
+      <MasterCardSection />
+      {/* REGISTRATION FORM */}
       <div className="formDiv">
         <div className="form-container">
           <form onSubmit={actionSubmit}>
-            <label htmlFor="rfid">RFID Tag ID</label>
+            <label htmlFor="rfid">
+              RFID Tag ID
+              <span id="red-star" title="mandatory">
+                *
+              </span>
+            </label>
             <input
               type="text"
               id="rfid"
               name="rfid"
+              className="form-input-style focus-bck hover-bck-gray"
               onChange={inputEvent}
               value={details.rfid}
+              required
             />
-            <label htmlFor="name">Name</label>
+            <label htmlFor="name">
+              Name
+              <span id="red-star" title="mandatory">
+                *
+              </span>
+            </label>
             <input
               type="text"
               id="name"
               name="name"
+              className="form-input-style focus-bck hover-bck-gray"
               onChange={inputEvent}
               value={details.name}
+              required
             />
-            <label htmlFor="roll_no">RollNumber</label>
+            <label htmlFor="roll_no">
+              RollNumber
+              <span id="red-star" title="mandatory">
+                *
+              </span>
+            </label>
             <input
               type="text"
               id="roll_no"
               name="roll_no"
+              className="form-input-style focus-bck hover-bck-gray"
               onChange={inputEvent}
               value={details.roll_no}
+              required
             />
             <label htmlFor="expiry_date">
               Validity (default one month from now)
             </label>
             <input
-              type="text"
+              type="date"
               id="expiry_date"
               name="expiry_date"
+              className="form-input-style focus-bck hover-bck-gray"
               onChange={inputEvent}
               value={details.expiry_date}
+              required
             />
             <label htmlFor="checkedIn">checkedIn</label>
-            <input
-              type="text"
+            <select
               id="checkedIn"
               name="checkedIn"
+              className="form-input-style focus-bck hover-bck-gray"
               onChange={inputEvent}
               value={details.checkedIn}
-            />
+              required
+            >
+              <option value="false">false</option>
+              <option value="true">true</option>
+            </select>
             <div className="buttonBox">
               {/* <button
               type="create"
-              className="btn createButton"
+              className="btn createBtn"
               id="createButton"
             >
               Create
             </button> */}
               <button
-                type="update"
-                className="btn updateButton"
+                type="submit"
+                className="btn updateBtn"
                 id="updateButton"
                 onClick={updateEvent}
+                title="Update/Create"
               >
-                Update
+                Save
               </button>
               <button
                 type="submit"
-                className="btn deleteButton"
+                className="btn deleteBtn"
                 id="deleteButton"
-                onClick={deleteEvent}
+                onClick={handleShowModal}
+                title="Delete"
               >
                 Delete
               </button>
             </div>
           </form>
-        </div>
-        <div className="master-list">
-          <div className="master">
-            <span className={1 ? "todo-text todo-completed" : "todo-text"}>
-              rfid1
-            </span>
-            <button>delete</button>
-          </div>
-          <div className="master">
-            <span className={1 ? "todo-text todo-completed" : "todo-text"}>
-              rfid2
-            </span>
-            <button>delete</button>
-          </div>
-          <div className="master">
-            <span className={1 ? "todo-text todo-completed" : "todo-text"}>
-              rfid3
-            </span>
-            <button>delete</button>
-          </div>
         </div>
       </div>
     </>

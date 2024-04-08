@@ -1,27 +1,49 @@
-import React, { useMemo } from "react";
-import { useTable, useSortBy, usePagination } from "react-table";
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import {
+  useTable,
+  useSortBy,
+  usePagination,
+  useGlobalFilter,
+} from "react-table";
 import { COLUMNS } from "./columns";
-import MOCK_DATA from "./MOCK_DATA.json";
+// import MOCK_DATA from "./MOCK_DATA.json";
 import GlobalFilter from "./GlobalFilter";
 import "./FetchAll.css";
 
-
-
-
+const GET_URL = "http://localhost:4000/admin/fetchAll";
 
 const FetchAll = () => {
   //memoize the data (do not refresh data after every render)
   const columns = useMemo(() => COLUMNS, []);
-  const data = useMemo(() => MOCK_DATA, []);
+  // const data = useMemo(() => MOCK_DATA, []);
 
+  const [data, setData] = useState([]);
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(GET_URL);
+      setData(response.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
   const tableInstance = useTable(
     {
       columns: columns,
       data: data,
     },
+    useGlobalFilter,
     useSortBy,
     usePagination
   );
+
+  //destructuring tableInstance
   const {
     getTableProps,
     getTableBodyProps,
@@ -29,7 +51,7 @@ const FetchAll = () => {
     prepareRow,
     pageOptions,
     page,
-    state: { pageIndex, pageSize },
+    state: { pageIndex, pageSize, globalFilter },
     gotoPage,
     previousPage,
     nextPage,
@@ -37,13 +59,14 @@ const FetchAll = () => {
     canPreviousPage,
     canNextPage,
     pageCount,
+    setGlobalFilter,
   } = tableInstance;
 
   // const {globalFilter} = state;
-
+// console.log({...getTableBodyProps});
   return (
     <>
-      <GlobalFilter />
+      <GlobalFilter filter={globalFilter} setFilter={setGlobalFilter} />
       <table {...getTableProps()}>
         <thead>
           {headerGroups.map((headerGroup) => (
@@ -62,6 +85,7 @@ const FetchAll = () => {
         <tbody {...getTableBodyProps()}>
           {page.map((row) => {
             prepareRow(row);
+            console.log(row);
             return (
               <tr {...row.getRowProps()}>
                 {row.cells.map((cell) => {
@@ -74,6 +98,7 @@ const FetchAll = () => {
           })}
         </tbody>
       </table>
+      {/* NAVIGATORS */}
       <div className="navigators">
         <span className="showPageNumber">
           Page:{" "}
@@ -132,6 +157,7 @@ const FetchAll = () => {
           {">>"}
         </button>
       </div>
+      {/* {document.body.} */}
     </>
   );
 };
