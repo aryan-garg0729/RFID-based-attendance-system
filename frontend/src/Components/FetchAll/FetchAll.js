@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {useNavigate} from 'react-router-dom';
 import axios from "axios";
 import {
   useTable,
@@ -16,6 +17,7 @@ const GET_URL = "http://localhost:4000/admin/fetchAll";
 const FetchAll = () => {
   //memoize the data (do not refresh data after every render)
   const columns = useMemo(() => COLUMNS, []);
+  const navigate = useNavigate();
   // const data = useMemo(() => MOCK_DATA, []);
 
   const [data, setData] = useState([]);
@@ -25,14 +27,14 @@ const FetchAll = () => {
       const response = await axios.get(GET_URL);
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-  
+
   const tableInstance = useTable(
     {
       columns: columns,
@@ -62,8 +64,13 @@ const FetchAll = () => {
     setGlobalFilter,
   } = tableInstance;
 
+  const handleCellClick = (rowData) => {
+    console.log(rowData);
+    // Navigate to another route passing rowData as state
+    navigate("/ud", { state: { rowData } });
+  };
   // const {globalFilter} = state;
-// console.log({...getTableBodyProps});
+  // console.log({...getTableBodyProps});
   return (
     <>
       <GlobalFilter filter={globalFilter} setFilter={setGlobalFilter} />
@@ -85,13 +92,32 @@ const FetchAll = () => {
         <tbody {...getTableBodyProps()}>
           {page.map((row) => {
             prepareRow(row);
-            console.log(row);
             return (
               <tr {...row.getRowProps()}>
-                {row.cells.map((cell) => {
-                  return (
-                    <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                  );
+                {row.cells.map((cell, index) => {
+                  // Check if it's the second cell in the row
+                  if (index === 1) {
+                    // Add onClick event to the second cell
+                    return (
+                      <td
+                        key={cell.getCellProps().key}
+                        {...cell.getCellProps()}
+                        onClick={() => handleCellClick(row.original)}
+                      >
+                        {cell.render("Cell")}
+                      </td>
+                    );
+                  } else {
+                    // For other cells, render normally
+                    return (
+                      <td
+                        key={cell.getCellProps().key}
+                        {...cell.getCellProps()}
+                      >
+                        {cell.render("Cell")}
+                      </td>
+                    );
+                  }
                 })}
               </tr>
             );
@@ -157,7 +183,6 @@ const FetchAll = () => {
           {">>"}
         </button>
       </div>
-      {/* {document.body.} */}
     </>
   );
 };

@@ -61,7 +61,7 @@ const MasterCard = (props) => {
             />
             <div className="master-btn-box">
               <button
-                className="btn updateBtn"
+                className="btn saveBtn"
                 onClick={() => setShowUpdateModal(true)}
               >
                 Save

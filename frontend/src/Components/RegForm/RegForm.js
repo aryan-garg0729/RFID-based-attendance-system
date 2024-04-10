@@ -59,6 +59,7 @@ const RegForm = () => {
   };
   // close confirmation Modal
   const closeModal = () => setShowModal(false);
+
   //prevent default form submit action
   const inputEvent = (event) => {
     let value = event.target.value;
@@ -186,16 +187,10 @@ const RegForm = () => {
               <option value="true">true</option>
             </select>
             <div className="buttonBox">
-              {/* <button
-              type="create"
-              className="btn createBtn"
-              id="createButton"
-            >
-              Create
-            </button> */}
+             
               <button
                 type="submit"
-                className="btn updateBtn"
+                className="btn saveBtn"
                 id="updateButton"
                 onClick={updateEvent}
                 title="Update/Create"

@@ -56,6 +56,7 @@ router.post("/admin", async function (req, res) {
 // create and update
 router.post("/admin/update", async (req, res) => {
   try {
+    console.log(req.body);
     // findandUpdate
     let { rfid, name, roll_no, checkedIn, expiry_date } = req.body;
 
