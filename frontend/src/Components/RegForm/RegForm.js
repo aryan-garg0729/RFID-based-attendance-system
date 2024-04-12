@@ -7,7 +7,7 @@ import io from "socket.io-client";
 import "./RegForm.css";
 import ConfirmationModal from "../Prompts/ConfirmationModal";
 
-const UPDATE_URL = "http://localhost:4000/admin/update";
+const UPDATE_URL = "http://localhost:4000/admin/save";
 const DELETE_URL = "http://localhost:4000/admin/delete";
 
 const RegForm = () => {

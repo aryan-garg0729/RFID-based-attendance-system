@@ -1,14 +1,15 @@
 import React from "react";
 
-const GlobalFilter = ({filter, setFilter}) => {
+const GlobalFilter = ({ filter, setFilter }) => {
   return (
-    <span>
+    <div style={{ textAlign: "center" }}>
       Search:{" "}
       <input
+        className="form-input-style "
         value={filter || ""}
         onChange={(e) => setFilter(e.target.value)}
       />
-    </span>
+    </div>
   );
 };
 

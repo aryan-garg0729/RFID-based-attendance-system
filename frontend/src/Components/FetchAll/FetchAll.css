@@ -1,4 +1,4 @@
-table {
+.fetch-all-page table {
   font-family: Arial, Helvetica, sans-serif;
   border-collapse: collapse;
   width: 90vw;
@@ -6,23 +6,23 @@ table {
   margin-top:1rem;
   margin-bottom: 1rem;
 }
-table td,
-table th {
+.fetch-all-page table td,
+.fetch-all-page table th {
   border: 1px solid #ddd;
   padding: 8px;
   width: 13rem;
   /* border-radius: 20px; */
 }
 
-table tr:nth-child(even) {
+.fetch-all-page table tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
-table tr:hover {
+.fetch-all-page table tr:hover {
   background-color: #ddd;
 }
 
-table th {
+.fetch-all-page table th {
   padding-top: 12px;
   padding-bottom: 12px;
   text-align: center;
@@ -30,20 +30,20 @@ table th {
   color: white;
 }
 
-table thead {
+.fetch-all-page table thead {
   position: sticky;
   top: 0;
 }
-table tbody tr td:hover:nth-child(2) {
+.fetch-all-page table tbody tr td:hover:nth-child(2) {
   color: var(--primary-color);
   cursor:pointer;
   text-decoration: underline;
 }
-.tableContainer {
+.fetch-all-page .tableContainer {
   display: gird;
   place-items: center;
 }
-.navigators{
+.fetch-all-page .navigators{
   width:fit-content;
 margin: auto;
 }

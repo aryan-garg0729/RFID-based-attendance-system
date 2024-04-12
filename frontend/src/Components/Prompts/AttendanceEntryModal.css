@@ -1,0 +1,12 @@
+.edit-attendance-form div {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 4px 4px;
+}
+.edit-attendance-form label {
+  min-width: 50%;
+}
+.edit-attendance-form input {
+  min-width: 40%;
+}

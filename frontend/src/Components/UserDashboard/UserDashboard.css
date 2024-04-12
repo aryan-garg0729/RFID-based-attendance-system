@@ -68,23 +68,48 @@
   justify-content: flex-end;
 }
 
-.entry-section {
-  max-height: 60vh;
+.attendance-section {
+  min-height: 60vh;
   overflow:auto;
 }
-.entry-section div {
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-around;
-  outline: 1px solid white;
+
+
+.attendance-section table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  overflow: auto;
 }
-.entry-section div.checkIn {
-  border: 1px solid rgba(0, 255, 76, 0.8);
-  background-color: rgba(0, 255, 76, 0.1);
+
+/* Style table header */
+.attendance-section th {
+  background-color: #f2f2f2;
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
 }
-.entry-section div.checkOut {
-  border: 1px solid rgba(255, 0, 0, 0.8);
-  background-color: rgba(255, 0, 0, 0.1);
+
+/* Style table rows */
+.attendance-section tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+/* Style table cells */
+.attendance-section td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Hover effect on rows */
+.attendance-section tr:hover {
+  background-color: #ddd;
+}
+
+.attendance-section td{
+  width : 33%;
+}
+.attendance-section #throughAdmin {
+  color:red;
 }
 
 @media screen and (width <= 680px) {

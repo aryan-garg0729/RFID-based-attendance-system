@@ -15,6 +15,6 @@ export const COLUMNS = [
     {
         id:'isInside',
         Header : 'Is Inside',
-        accessor: d => d.checkedIn.toString()
+        accessor: d => d.isCheckedIn.toString()
     },
 ];

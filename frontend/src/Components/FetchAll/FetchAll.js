@@ -66,13 +66,15 @@ const FetchAll = () => {
 
   const handleCellClick = (rowData) => {
     console.log(rowData);
+    const rfid = rowData.rfid;
     // Navigate to another route passing rowData as state
-    navigate("/ud", { state: { rowData } });
+    navigate("/ud", { state: { rfid } });
   };
   // const {globalFilter} = state;
   // console.log({...getTableBodyProps});
   return (
     <>
+    <div className="fetch-all-page">
       <GlobalFilter filter={globalFilter} setFilter={setGlobalFilter} />
       <table {...getTableProps()}>
         <thead>
@@ -182,6 +184,7 @@ const FetchAll = () => {
         >
           {">>"}
         </button>
+      </div>
       </div>
     </>
   );
