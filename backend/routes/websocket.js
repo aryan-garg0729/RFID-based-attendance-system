@@ -13,7 +13,7 @@ const SOCKET_IO_PORT = 5000; //dedicated port for websocket
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "DELETE"],
+    methods: ["GET", "POST", "DELETE", "PUT"],
   },
 });
 

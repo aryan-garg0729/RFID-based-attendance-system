@@ -5,14 +5,14 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
-const char *SSID = "vivo 1916";
-const char *PASSWORD = "pheophytin";
+const char *SSID = "S10";
+const char *PASSWORD = "fomn1596";
 
 #define RST_PIN D3 // Define the GPIO pin connected to the RFID reader's RST pin
 #define SS_PIN D4  // Define the GPIO pin connected to the RFID reader's SS pin
 
 // Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.43.16:4000/admin";
+String serverName = "http://192.168.72.108:4000/admin";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String rfid = "";                 // Variable to store the detected RFID UID
 

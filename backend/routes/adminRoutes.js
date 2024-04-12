@@ -1,31 +1,19 @@
 const express = require("express");
 
-const userModel = require("./userModel");
+const userModel = require("../model/userModel");
 const router = express.Router();
 const io = require("./websocket");
 const exp = require("constants");
 
-function getDateTimeObj(arg) {
-  //year month date hour minute second
-  return {
-    year: arg.getFullYear(),
-    month: arg.getMonth(),
-    date: arg.getDate(),
-    hours: arg.getHours(),
-    minutes: arg.getMinutes(),
-    seconds: arg.getSeconds(),
-  };
-}
-
-/* GET home page. */
-router.get("/", function (req, res) {
-  res.render("index");
-});
+// /* GET home page. */
+// router.get("/", function (req, res) {
+//   res.render("index");
+// });
 
 // -----------------------Admin side MCU requests here---------------------------
-// takes rfid and returns all details
+// takes rfid from nodeMCU and returns all details to frontend regForm
 let previousRfidData = {};
-router.post("/admin", async function (req, res) {
+router.post("/", async function (req, res) {
   try {
     let rfid = req.body.rfid; // got the rfid
     const data = await userModel.findOne({ rfid: rfid });
@@ -43,7 +31,7 @@ router.post("/admin", async function (req, res) {
       res.status(404).send({ message: "user not found" });
     } else {
       previousRfidData = data;
-      res.status(200).send({ message: "user found" });
+      res.status(200).send({ message: "user found", data });
     }
     //emitting searched data to frontend
     io.emit("scannedRfidData", previousRfidData);
@@ -53,17 +41,17 @@ router.post("/admin", async function (req, res) {
   }
 });
 
-// create and update
-router.post("/admin/update", async (req, res) => {
+// create and update in same route
+router.post("/save", async (req, res) => {
   try {
     console.log(req.body);
     // findandUpdate
     let { rfid, name, roll_no, checkedIn, expiry_date } = req.body;
 
-    expiry_date = new Date(expiry_date).toISOString();
     if (!expiry_date) {
       expiry_date = new Date(Date.now() + 2592000000);
     }
+    expiry_date = new Date(expiry_date).toISOString();
     const std = await userModel.findOne({ rfid: rfid });
     //if user not found then create a new user
     if (!std) {
@@ -98,7 +86,7 @@ router.post("/admin/update", async (req, res) => {
 });
 
 // delete
-router.delete("/admin/delete", async (req, res) => {
+router.delete("/delete", async (req, res) => {
   try {
     let rfid = req.body.rfid;
     let data = await userModel.findOne({ rfid: rfid });
@@ -116,9 +104,11 @@ router.delete("/admin/delete", async (req, res) => {
 });
 
 // fetchAllData
-router.get("/admin/fetchAll", async (req, res) => {
+router.get("/fetchAll", async (req, res) => {
   try {
-    let data = await userModel.find();
+    let data = await userModel
+      .find()
+      .select("-_id rfid roll_no name isCheckedIn");
     if (!data) {
       res.status(404).send({ message: "Database is Empty" });
     }
@@ -130,7 +120,7 @@ router.get("/admin/fetchAll", async (req, res) => {
 });
 
 // fetchAll RFID AND EXPIRY DATE
-router.get("/admin/fetchAllRfidAndExpiry", async (req, res) => {
+router.get("/fetchAllRfidAndExpiry", async (req, res) => {
   try {
     let data = await userModel.find().select("-_id rfid expiry_date");
     if (!data) {
@@ -143,82 +133,69 @@ router.get("/admin/fetchAllRfidAndExpiry", async (req, res) => {
   }
 });
 
-
-// -----------------------Student side MCU requests here---------------------------
-
-
-router.get("/allData", async (req, res) => {
+//------------------USER DAHSBOARD ROUTES--------------------//
+router.get("/findByRfid/", async (req, res) => {
   try {
-    let page = req.query.page ? parseInt(req.query.page) : 1; // Get the requested page number from query parameters
-    let pageSize = 100; // Define the number of items per page
-
-    // Calculate the skip value based on the requested page number and page size
-    let skip = (page - 1) * pageSize;
-
-    // Query the database to retrieve a subset of data based on pagination
-    let data = await userModel
-      .find()
-      .skip(skip)
-      .limit(pageSize)
-      .select("-_id rfid expiry_date");
-
-    // if (data.size() >= 20) morepage = true;
-    // data < 20 -> false
-
-    // console.log(data);
-    if (data.length == 0) {
-      return res.status(404).send({ message: "done" });
-    }
-
-    // console.log(data);
-    res.status(200).send(data);
-  } catch (e) {
-    console.error("Error finding user:", e);
-    res.status(500).send();
-  }
-});
-
-router.get("/currentDateTime", (req, res) => {
-  try {
-    res.status(200).send(getDateTimeObj(new Date()));
-    console.log("nothing");
-  } catch (error) {
-    res.status(500).send({ message: error });
-  }
-});
-// attendance h/w -> calls this route during entry and exit
-router.post("/student/store", async (req, res) => {
-  try {
-    //MONTH IS O INDEXED
-    let { rfid, year, month, date, hour, minute } = req.body;
-    const checkin_date = new Date(year, month - 1, date, hour, minute);
-    checkin_date.setHours(checkin_date.getHours() + 5);
-    checkin_date.setMinutes(checkin_date.getMinutes() + 30);
-    // console.log(checkin_date);
-    let data = await userModel
-      .findOne({ rfid: rfid })
-      .select("-_id rfid expiry_date checkedIn");
-    // console.log("Backend: " + rfid);
-    // console.log(data);
-    if (data == null) {
-      res.status(404).send({ message: "Student not registered" });
-    } else if (data.expiry_date < checkin_date) {
-      res.status(403).send({ message: "Fees due" });
+    const rfid = req.query.rfid;
+    console.log("rfid ", rfid);
+    const data = await userModel.findOne({ rfid: rfid }).select("-_id -__v");
+    if (data) {
+      res.status(200).send(data);
     } else {
-      // console.log(data);
-      data.checkedIn = !data.checkedIn;
-      var type = data.checkedIn ? "CheckIn" : "CheckOut";
-      let newEntry = { entry_type: type, time: checkin_date };
-      let upd = await userModel.updateOne(
-        { rfid: rfid },
-        { $push: { entries: newEntry }, $set: { checkedIn: data.checkedIn } }
-      );
-      res.status(200).send({ message: "user found" });
+      res.status(404).send({ message: "student not found" });
     }
-  } catch (e) {
+  } catch (error) {
     console.error("Error finding user:", e);
-    res.status(500).send();
+    res.status(500).send({ message: "Error finding user" });
   }
 });
 
+router.put("/findByRfid", async (req, res) => {
+  try {
+    let { rfid, newDate, newCheckInTime, newCheckOutTime } = req.body;
+    // Find the student by RFID
+    const student = await userModel.findOne({ rfid: rfid });
+    newCheckInTime = parseDateTime(newDate, newCheckInTime);
+    newCheckOutTime = parseDateTime(newDate, newCheckOutTime);
+
+    //finding previous any entry
+    let todayAttendance = student.attendance.find(
+      (entry) => entry.date === newDate
+    );
+    //if not found any entry
+    if (!todayAttendance) {
+      todayAttendance = {
+        date: newDate,
+        checkIn: newCheckInTime,
+        checkOut: newCheckOutTime,
+        throughAdmin : true
+      };
+      student.attendance.push(todayAttendance);
+    } else {
+      todayAttendance.checkIn = newCheckInTime;
+      todayAttendance.checkOut = newCheckOutTime;
+      todayAttendance.throughAdmin = true;
+    }
+    await student.save();
+    res.status(200).json({ message: "Entry Added successfully" });
+  } catch (error) {
+    console.error("Error finding user:", e);
+    res.status(500).send({ message: "Error finding user" });
+  }
+});
+
+// Function to parse date and time strings and create Date objects
+const parseDateTime = (dateString, timeString) => {
+  // Split the date string into year, month, and day parts
+  const [year, month, day] = dateString.split("-").map(Number);
+
+  // Split the time string into hours and minutes parts
+  const [hours, minutes] = timeString.split(":").map(Number);
+
+  // Return a new Date object with the parsed values
+  let d = new Date(year, month - 1, day, hours, minutes);
+  d.setHours(d.getHours() + 5);
+  d.setMinutes(d.getMinutes() + 30);
+  return d;
+};
 module.exports = router;

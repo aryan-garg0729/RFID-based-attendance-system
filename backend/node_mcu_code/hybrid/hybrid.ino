@@ -28,6 +28,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
 String LOCALHOST = "http://192.168.72.108:4000";
+// Your Domain name with URL path or IP address with path
+String admin_serverName = "http://192.168.72.108:4000/admin";
 String SERVER_NAME = LOCALHOST + "/student";
 String STORE = LOCALHOST + "/student/store";
 String MASTER = LOCALHOST + "/master/names";
@@ -39,6 +41,7 @@ bool gotdata = false;
 bool gotCurrDateAndTime = false;
 bool gotmasters = false;
 bool isSpiFFS = false;
+bool isAdmin = false;
 
 String masters[3];
 
@@ -61,6 +64,7 @@ int logAndAuth();
 void readAllDataFromFile(String path);
 void formatSPIFFS();
 void sendToBackendAdmin();
+
 void setup()
 {
   // Set CPU frequency to 160MHz
@@ -131,6 +135,20 @@ void setup()
 
 void loop()
 {
+  if(isAdmin){
+    // Scan for RFID tags/cards
+    rfid = getRfid();
+    if (rfid == "")
+    {
+      return;
+    }
+    if(rfid=="B1A8891D"){
+      isAdmin = !isAdmin;
+      return;
+    }
+    sendToBackendAdmin();
+    return;
+  }
   updateTime();
   // if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19)   //MORNING 7AM to EVE 7PM
   if (1)  //for testing perpose
@@ -140,6 +158,10 @@ void loop()
     rfid = getRfid();
     if (rfid == "")
     {
+      return;
+    }
+    if(rfid=="B1A8891D"){
+      isAdmin = !isAdmin;
       return;
     }
     // compare masters
@@ -764,4 +786,40 @@ void formatSPIFFS()
   {
     Serial.println("Error formatting SPIFFS!");
   }
+}
+
+void sendToBackendAdmin()
+{
+  WiFiClient client;
+  HTTPClient http;
+
+  connectToWifi();
+  // Your Domain name with URL path or IP address with path
+  http.begin(client, admin_serverName);
+
+  http.addHeader("Content-Type", "application/json");
+  String data = "{\"rfid\":\"" + rfid + "\"}";
+  Serial.println(data);
+  int httpResponseCode = http.POST(data);
+
+  Serial.print("HTTP Response code: ");
+  Serial.println(httpResponseCode);
+
+  // Check for errors
+  if (httpResponseCode != 200)
+  {
+    // red (server issue)
+    digitalWrite(D0, HIGH);
+    delay(500);
+    digitalWrite(D0, LOW);
+  }
+  else
+  {
+    // green (ok)
+    digitalWrite(D2, HIGH);
+    delay(500); // 0.5 second delay
+    digitalWrite(D2, LOW);
+  }
+  // Free resources
+  http.end();
 }
