@@ -83,7 +83,7 @@ router.post("/save", async (req, res) => {
     }
   } catch (e) {
     console.error("Error updating user:", e);
-    res.status(500).send("Error updating user");
+    res.status(500).send({message:"Error updating user"});
   }
 });
 
@@ -101,7 +101,7 @@ router.delete("/delete", async (req, res) => {
     }
   } catch (e) {
     console.error("Error deleting user:", e);
-    res.status(500).send("Error deleting user");
+    res.status(500).send({message:"Error deleting user"});
   }
 });
 
@@ -117,7 +117,7 @@ router.get("/fetchAll", async (req, res) => {
     res.status(200).send(data);
   } catch (e) {
     console.error("Error getting all user:", e);
-    res.status(500).send("Error getting all user");
+    res.status(500).send({message:"Error getting all user"});
   }
 });
 
@@ -131,7 +131,7 @@ router.get("/fetchAllRfidAndExpiry", async (req, res) => {
     res.status(200).send(data);
   } catch (e) {
     console.error("Error getting all user:", e);
-    res.status(500).send("Error getting all user");
+    res.status(500).send({message:"Error getting all user"});
   }
 });
 

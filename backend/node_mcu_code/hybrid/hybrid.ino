@@ -7,8 +7,8 @@
 #include <FS.h>
 
 // CONSTANTS FOR WIFI CONNECTION
-const char *SSID = "NSUT_WIFI";
-const char *PASSWORD = "";
+const char *SSID = "Airtel_isha_6157";
+const char *PASSWORD = "air04221";
 
 unsigned long lastMillis = 0;
 const unsigned long interval = 1000; // 1 second interval to update time every second
@@ -26,7 +26,7 @@ const char *FILE_POINTER_FILE = "/filepointer.txt";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
-String LOCALHOST = "http://10.100.54.90:4000";
+String LOCALHOST = "http://192.168.1.2:4000";
 // Your Domain name with URL path or IP address with path
 String admin_serverName = LOCALHOST + "/admin";
 String SERVER_NAME = LOCALHOST + "/student";
@@ -77,7 +77,7 @@ void setup()
   // digitalWrite(D8,HIGH);
 
   // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
-  // formatSPIFFS();
+  formatSPIFFS();
 
   digitalWrite(D8, HIGH);
 

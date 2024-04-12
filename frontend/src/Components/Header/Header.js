@@ -11,14 +11,14 @@ const Header = () => {
       <Navbar bg="primary" data-bs-theme="dark" className="navbar">
         <Container>
           <Nav className="me-auto">
-            <Nav.Link as={NavLink} to="/" >
+            {/* <Nav.Link as={NavLink} to="/" >
               Home
-            </Nav.Link>
-            <Nav.Link as={NavLink} to="/RegForm" >
+            </Nav.Link> */}
+            <Nav.Link as={NavLink} to="/" >
               Register
             </Nav.Link>
             <Nav.Link as={NavLink} to="/fetchAll" >
-              GetAll
+              List All
             </Nav.Link>
           </Nav>
         </Container>

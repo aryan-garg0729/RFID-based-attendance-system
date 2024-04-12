@@ -34,7 +34,7 @@ const RegForm = () => {
       return () => newSocket.close();
     } catch (error) {
       console.error("Error connecting server:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   }, []);
 
@@ -80,13 +80,15 @@ const RegForm = () => {
   //update or create student info
   const updateEvent = async (event) => {
     try {
-      if (details.rfid) {
+      if (details.rfid && details.name && details.roll_no) {
         const res = await axios.post(UPDATE_URL, details);
         toast(`${res.status} | ${res.data.message}`);
+      }else{
+        toast.warning("Fill all required fields");
       }
     } catch (error) {
       console.error("Error updating detail:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 
@@ -102,7 +104,7 @@ const RegForm = () => {
       toast(`${res.status} | ${res.data.message}`);
     } catch (error) {
       console.error("Error deleting detail:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
   return (
@@ -111,9 +113,12 @@ const RegForm = () => {
       {showModal && details.name && details.roll_no && details.rfid && (
         <ConfirmationModal onCancel={closeModal} onConfirm={deleteEvent} />
       )}
+
+      <div className="regform-container">
       {/* MASTERS RFID SECTION */}
       <MasterCardSection />
       {/* REGISTRATION FORM */}
+      
       <div className="formDiv">
         <div className="form-container">
           <form onSubmit={actionSubmit}>
@@ -209,6 +214,7 @@ const RegForm = () => {
             </div>
           </form>
         </div>
+      </div>
       </div>
     </>
   );

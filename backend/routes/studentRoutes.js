@@ -45,7 +45,7 @@ router.get("/allData", async (req, res) => {
     res.status(200).send(data);
   } catch (e) {
     console.error("Error finding user:", e);
-    res.status(500).send();
+    res.status(500).send({message:"Server Error"});
   }
 });
 
@@ -54,7 +54,7 @@ router.get("/currentDateTime", (req, res) => {
     res.status(200).send(getDateTimeObj(new Date()));
     console.log("nothing");
   } catch (error) {
-    res.status(500).send({ message: error });
+    res.status(500).send({ message: "Server Error" });
   }
 });
 // attendance h/w -> calls this route during entry and exit
@@ -68,7 +68,7 @@ router.post("/store", async (req, res) => {
     const student = await userModel.findOne({ rfid: rfid });
 
     if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(200).json({ message: "Student not found" });
     }
     // Create a new Date object for check-in time
     const logDateTime = new Date(year, month, date, hour, minute);
@@ -101,7 +101,7 @@ router.post("/store", async (req, res) => {
         student.isCheckedIn = true;
         isUpdated = true;
       } else {
-        res.status(400).json({ message: "Bad Request, can't check In" });
+        res.status(200).json({ message: "Bad Request, can't check In" });
       }
     } else if (entry_type === "checkOut") {
       if (todayAttendance) {
@@ -109,10 +109,10 @@ router.post("/store", async (req, res) => {
         student.isCheckedIn = false;
         isUpdated = true;
       } else {
-        res.status(400).json({ message: "Bad Request, can't check Out" });
+        res.status(200).json({ message: "Bad Request, can't check Out" });
       }
     } else {
-      return res.status(400).json({ message: "Invalid entry type" });
+      return res.status(200).json({ message: "Invalid entry type" });
     }
 
     if (isUpdated) {

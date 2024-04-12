@@ -68,7 +68,7 @@ const FetchAll = () => {
     console.log(rowData);
     const rfid = rowData.rfid;
     // Navigate to another route passing rowData as state
-    navigate("/ud", { state: { rfid } });
+    navigate("/userDashboard", { state: { rfid } });
   };
   // const {globalFilter} = state;
   // console.log({...getTableBodyProps});
@@ -84,7 +84,7 @@ const FetchAll = () => {
                 <th {...column.getHeaderProps(column.getSortByToggleProps())}>
                   {column.render("Header")}
                   <span>
-                    {column.isSorted ? (column.isSortedDesc ? "🔽" : "🔼") : ""}
+                    {column.isSorted ? (column.isSortedDesc ? "🔽" : "🔼") : "🔃"}
                   </span>
                 </th>
               ))}

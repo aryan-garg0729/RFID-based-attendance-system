@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import "./AttendanceEntryModal.css";
+import ConfirmationModal from "./ConfirmationModal";
 
 const AttendanceEntryModal = ({ onCancel, onConfirm, rfid, rowData }) => {
+  const [showModal, setShowModal] = useState(false);
   let { date, checkIn, checkOut } = rowData;
   checkIn = checkIn.slice(11, 16);
   checkOut = checkOut.slice(11, 16);
@@ -11,6 +13,14 @@ const AttendanceEntryModal = ({ onCancel, onConfirm, rfid, rowData }) => {
     newCheckInTime: checkIn,
     newCheckOutTime: checkOut,
   });
+
+  // close confirmation Modal
+  const closeModal = () => setShowModal(false);
+
+  const handleShowConfirmationModal = () => {
+    setShowModal(true);
+  };
+
   //prevent default form submit action
   const inputEvent = (event) => {
     let value = event.target.value;
@@ -30,6 +40,9 @@ const AttendanceEntryModal = ({ onCancel, onConfirm, rfid, rowData }) => {
   });
   return ReactDOM.createPortal(
     <>
+      {showModal && (
+        <ConfirmationModal onCancel={closeModal} onConfirm={() => onConfirm({ ...details })} />
+      )}
       <div className="modal-wrapper">
         <div className="modal-container">
           <div className="edit-attendance-form">
@@ -83,9 +96,9 @@ const AttendanceEntryModal = ({ onCancel, onConfirm, rfid, rowData }) => {
             </button>
             <button
               className="btn saveBtn"
-              onClick={() => onConfirm({ ...details })}
+              onClick={handleShowConfirmationModal}
             >
-              Confirm
+              Save
             </button>
           </div>
         </div>

@@ -38,7 +38,7 @@ const UserDashboard = () => {
         setDetails(dt.data);
       } catch (error) {
         console.error("Error fetching detail:", error);
-        errorToast(error.name, error.message);
+        errorToast(error);
       }
     }
     fetchData();
@@ -59,9 +59,10 @@ const UserDashboard = () => {
 
   //prevent default form submit action
   const inputEvent = (event) => {
+    
     let value = event.target.value;
     let name = event.target.name;
-
+    console.log("inputevent",name,value);
     if (name === "rfid") {
       value = value.toUpperCase();
     }
@@ -78,9 +79,11 @@ const UserDashboard = () => {
   const handleShowUpdateModal = () => {
     if (details.rfid && details.name && details.roll_no && details.expiry_date)
       setShowUpdateModal(true);
+    else toast.warning("Please Enter Details (⊙ˍ⊙)")
   };
   const handleShowDeleteModal = () => {
     if (details.rfid) setShowDeleteModal(true);
+    else toast.warning("Please Enter RFID :(")
   };
   // close confirmation Modal
   const closeModal = () => {
@@ -97,7 +100,7 @@ const UserDashboard = () => {
       }
     } catch (error) {
       console.error("Error updating detail:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 
@@ -112,7 +115,7 @@ const UserDashboard = () => {
       toast(`${res.status} | ${res.data.message}`);
     } catch (error) {
       console.error("Error deleting detail:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 
@@ -131,7 +134,7 @@ const UserDashboard = () => {
       toast(`${res.status} | ${res.data.message}`);
     } catch (error) {
       console.error("Error deleting detail:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 
@@ -191,7 +194,7 @@ const UserDashboard = () => {
           <div className="detail-section">
             <div className="dash-details">
               <div>
-                <span>Name*</span>
+                <span>Name<span id="red-star" title="mandatory">*</span></span>
                 <input
                   type="text"
                   name="name"
@@ -201,7 +204,7 @@ const UserDashboard = () => {
                 />
               </div>
               <div>
-                <span>Roll_no*</span>
+                <span>Roll_no<span id="red-star" title="mandatory">*</span></span>
                 <input
                   type="text"
                   name="roll_no"
@@ -211,7 +214,7 @@ const UserDashboard = () => {
                 />
               </div>
               <div>
-                <span>RFID*</span>
+                <span>RFID<span id="red-star" title="mandatory">*</span></span>
                 <input
                   type="text"
                   name="rfid"
@@ -222,7 +225,7 @@ const UserDashboard = () => {
                 />
               </div>
               <div>
-                <span>Expiry Date*</span>
+                <span>Expiry Date<span id="red-star" title="mandatory">*</span></span>
                 <input
                   type="date"
                   name="expiry_date"
@@ -233,9 +236,9 @@ const UserDashboard = () => {
                 />
               </div>
               <div>
-                <span>CheckedIn Status*</span>
+                <span>CheckedIn Status<span id="red-star" title="mandatory">*</span></span>
                 <select
-                  name="checkedIn"
+                  name="isCheckedIn"
                   onChange={inputEvent}
                   value={details.isCheckedIn}
                   

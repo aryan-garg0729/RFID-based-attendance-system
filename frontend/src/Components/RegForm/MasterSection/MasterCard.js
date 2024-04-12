@@ -35,6 +35,7 @@ const MasterCard = (props) => {
 
   const handleDeleteName = () => {
     props.deleteName(props.id);
+    setValue("######");
   };
   return (
     <>

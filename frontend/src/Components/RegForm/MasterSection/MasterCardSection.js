@@ -19,7 +19,7 @@ const MasterCardSection = () => {
       setNames(response.data);
     } catch (error) {
       console.error("Error fetching names:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 
@@ -30,7 +30,7 @@ const MasterCardSection = () => {
       toast(`${res.status} | ${res.data.message}`);
     } catch (error) {
       console.error("Error updating name:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 
@@ -41,7 +41,7 @@ const MasterCardSection = () => {
       toast(`${res.status} | ${res.data.message}`);
     } catch (error) {
       console.error("Error deleting name:", error);
-      errorToast(error.name, error.message);
+      errorToast(error);
     }
   };
 

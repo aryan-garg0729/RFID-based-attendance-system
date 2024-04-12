@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 
-function errorToast(status, message) {
-  toast.error(`${status} | ${message}`);
+function errorToast(error) {
+  toast.error(`${error.response.status} | ${error.response.data.message}`);
 }
 export default errorToast;

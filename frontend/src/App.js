@@ -14,10 +14,10 @@ function App() {
       <Router>
         <Header />
         <Routes>
-          <Route exact path="/" Component={Home} />
-          <Route exact path="/RegForm" Component={RegForm} />
+          {/* <Route exact path="/" Component={Home} /> */}
+          <Route exact path="/" Component={RegForm} />
           <Route exact path="/fetchAll" Component={FetchAll} />
-          <Route exact path="/ud" Component={UserDashboard} />
+          <Route exact path="/userDashboard" Component={UserDashboard} />
           <Route path="*" Component={ErrorPage} />
         </Routes>
       </Router>
