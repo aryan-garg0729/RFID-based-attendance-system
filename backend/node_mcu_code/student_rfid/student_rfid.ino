@@ -28,9 +28,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
 String LOCALHOST = "http://192.168.72.108:4000";
-String SERVER_NAME = LOCALHOST + "/student";
 String STORE = LOCALHOST + "/student/store";
-String MASTER = LOCALHOST + "/master/names";
+String MASTER = LOCALHOST + "/admin/master/names";
 String rfid = ""; // Variable to store the detected RFID UID
 JsonArray arr;
 
@@ -132,8 +131,8 @@ void setup()
 void loop()
 {
   updateTime();
-  // if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19)   //MORNING 7AM to EVE 7PM
-  if (1)  //for testing perpose
+  if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19)   //MORNING 7AM to EVE 7PM
+  // if (1)  //for testing perpose
   {
     // Scan for RFID tags/cards
     int status = 0;
@@ -162,6 +161,9 @@ void loop()
     digitalWrite(D8, HIGH);
     sendToBackend();
     digitalWrite(D8, LOW); 
+
+    // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
+    formatSPIFFS();
     // sir se puchna h format file ka
   }
 
@@ -221,7 +223,7 @@ void getAllData()
     // initializeSPIFFS();
     // Convert integer to string
     String pageParam = String(i);
-    String serverPath = LOCALHOST + "/allData?page=" + pageParam;
+    String serverPath = LOCALHOST + "/student/allData?page=" + pageParam;
 
     // Your Domain name with URL path or IP address with path
     if (WiFi.status() == WL_CONNECTED)
@@ -338,7 +340,7 @@ void setcurrdatetime()
   JsonDocument doc;
   for (int i = 1; i < 6; i++)
   {
-    String serverPath = LOCALHOST + "/currentDateTime";
+    String serverPath = LOCALHOST + "/student/currentDateTime";
     // Your Domain name with URL path or IP address with path
     if (WiFi.status() == WL_CONNECTED)
     {

@@ -18,7 +18,7 @@ const RegForm = () => {
     rfid: "",
     roll_no: "",
     checkedIn: false,
-    expiry_date: new Date(Date.now() + 2592000000).toISOString().slice(0, 10),
+    expiry_date: new Date(Date.now() + 2592000000).toISOString(),
     entries: [],
   };
 
@@ -171,7 +171,7 @@ const RegForm = () => {
               name="expiry_date"
               className="form-input-style focus-bck hover-bck-gray"
               onChange={inputEvent}
-              value={details.expiry_date}
+              value={details.expiry_date.slice(0, 10)}
               required
             />
             <label htmlFor="checkedIn">checkedIn</label>

@@ -22,7 +22,7 @@ const studentSchema = mongoose.Schema({
         type: String,
         required: true,
       },
-      checkIn: { type: Date, default: Date.now },
+      checkIn: { type: Date, default: null},
       checkOut: { type: Date, default: null },
     },
   ],

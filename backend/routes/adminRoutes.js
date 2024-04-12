@@ -16,17 +16,19 @@ let previousRfidData = {};
 router.post("/", async function (req, res) {
   try {
     let rfid = req.body.rfid; // got the rfid
+    console.log("rfid" , rfid);
     const data = await userModel.findOne({ rfid: rfid });
 
     //either sending whole data or rfid only
+    console.log("data : ", data);
     if (!data) {
       previousRfidData = {
         name: "",
         rfid: rfid,
         roll_no: "",
         checkedIn: "",
-        expiry_date: "",
-        entries: [],
+        expiry_date: new Date(Date.now() + 2592000000).toISOString(),
+        attendance: [],
       };
       res.status(404).send({ message: "user not found" });
     } else {

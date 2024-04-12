@@ -12,14 +12,14 @@
 .dash-container {
   position: absolute;
   width: 80vw;
-  min-height: 90vh;
+  height: 90vh;
   border-radius: 10px;
   background-color: white;
-  padding: 2rem 2.5rem;
+  padding: 2rem 2rem;
   left: 50%;
   transform: translate(-50%, 0%); 
   margin-top: 2rem;
-
+  overflow: hidden;
 }
 .dash-header {
   display: block;
@@ -60,17 +60,25 @@
 }
 .dash-details span {
   display: inline-block;
-  min-width: 10rem;
+  /* min-width: 10rem; */
 }
-.dash-buttons {
+.dash-details div {
+  display: flex;
+  justify-content: space-between;
+}
+.dash-details input, .dash-details select {
+  width : 180px;
+}
+ .dash-buttons {
   flex-basis: 40%;
   display: flex;
   justify-content: flex-end;
 }
 
 .attendance-section {
-  min-height: 60vh;
-  overflow:auto;
+  height: 60%;
+  overflow-y : scroll;
+  overflow-x: hidden;
 }
 
 
@@ -78,7 +86,7 @@
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
-  overflow: auto;
+  margin-bottom: 5rem;
 }
 
 /* Style table header */
@@ -116,4 +124,8 @@
   .detail-section {
     flex-direction: column;
   }
+  .dash-container {
+    padding: 2rem 0.5rem 0.5rem 0.5rem;
+  }
 }
+

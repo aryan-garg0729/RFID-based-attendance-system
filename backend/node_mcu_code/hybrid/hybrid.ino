@@ -7,15 +7,14 @@
 #include <FS.h>
 
 // CONSTANTS FOR WIFI CONNECTION
-const char *SSID = "S10";
-const char *PASSWORD = "fomn1596";
+const char *SSID = "NSUT_WIFI";
+const char *PASSWORD = "";
 
 unsigned long lastMillis = 0;
 const unsigned long interval = 1000; // 1 second interval to update time every second
 int DEFAULT_TIME[3] = {7, 0, 0};     // HOURS MINUTES SECONDS
 int CURR_TIME[3] = {0, 0, 0};
 int CURR_DATE[3] = {1970, 1, 1}; // YEAR MONTH DATE
-
 
 // Constants for file paths
 const char *DATABASE_FILE_PATH = "/database.txt"; // RFID EXP_YEAR EXP_MONTH EXP_DATE
@@ -27,12 +26,12 @@ const char *FILE_POINTER_FILE = "/filepointer.txt";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
-String LOCALHOST = "http://192.168.72.108:4000";
+String LOCALHOST = "http://10.100.54.90:4000";
 // Your Domain name with URL path or IP address with path
-String admin_serverName = "http://192.168.72.108:4000/admin";
+String admin_serverName = LOCALHOST + "/admin";
 String SERVER_NAME = LOCALHOST + "/student";
 String STORE = LOCALHOST + "/student/store";
-String MASTER = LOCALHOST + "/master/names";
+String MASTER = LOCALHOST + "/admin/master/names";
 String rfid = ""; // Variable to store the detected RFID UID
 JsonArray arr;
 
@@ -44,6 +43,7 @@ bool isSpiFFS = false;
 bool isAdmin = false;
 
 String masters[3];
+String TOGGLE_RFID = "B1A8891D";
 
 // MY 14 FUNCTIONS (IN ORDER)
 bool connectToWifi();
@@ -69,7 +69,7 @@ void setup()
 {
   // Set CPU frequency to 160MHz
   // system_update_cpu_freq(SYS_CPU_160MHZ);
-   
+
   pinMode(D0, OUTPUT); // red
   pinMode(D1, OUTPUT); // yellow
   pinMode(D2, OUTPUT); // green
@@ -95,10 +95,13 @@ void setup()
     // getalldata from database if wifi is connected
     if (WiFi.status() == WL_CONNECTED)
     {
-      if(!gotdata)getAllData();
+      if (!gotdata)
+        getAllData();
       // gotdata = 1;
-      if(!gotCurrDateAndTime)setcurrdatetime();
-      if(!gotmasters)getMasters();
+      if (!gotCurrDateAndTime)
+        setcurrdatetime();
+      if (!gotmasters)
+        getMasters();
     }
   }
 
@@ -130,19 +133,23 @@ void setup()
   //   Serial.println("log file created");
   // }
 
-   digitalWrite(D8, LOW);
+  digitalWrite(D8, LOW);
 }
 
 void loop()
 {
-  if(isAdmin){
+  if (isAdmin)
+  {
+    digitalWrite(D0, HIGH);
     // Scan for RFID tags/cards
     rfid = getRfid();
     if (rfid == "")
     {
       return;
     }
-    if(rfid=="B1A8891D"){
+    if (rfid == TOGGLE_RFID)
+    {
+      digitalWrite(D0, LOW);
       isAdmin = !isAdmin;
       return;
     }
@@ -150,8 +157,8 @@ void loop()
     return;
   }
   updateTime();
-  // if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19)   //MORNING 7AM to EVE 7PM
-  if (1)  //for testing perpose
+  if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19)   //MORNING 7AM to EVE 7PM
+  // if (1) // for testing perpose
   {
     // Scan for RFID tags/cards
     int status = 0;
@@ -160,16 +167,19 @@ void loop()
     {
       return;
     }
-    if(rfid=="B1A8891D"){
+    if (rfid == "B1A8891D")
+    {
       isAdmin = !isAdmin;
       return;
     }
     // compare masters
-    for(int i = 0;i<3;i++){
-      if(masters[i]==rfid){
+    for (int i = 0; i < 3; i++)
+    {
+      if (masters[i] == rfid)
+      {
         digitalWrite(D8, HIGH);
         sendToBackend();
-        digitalWrite(D8, LOW); 
+        digitalWrite(D8, LOW);
         return;
       }
     }
@@ -183,10 +193,11 @@ void loop()
   {
     digitalWrite(D8, HIGH);
     sendToBackend();
-    digitalWrite(D8, LOW); 
+    digitalWrite(D8, LOW);
+    // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
+    formatSPIFFS();
     // sir se puchna h format file ka
   }
-
 }
 
 bool connectToWifi()
@@ -243,7 +254,7 @@ void getAllData()
     // initializeSPIFFS();
     // Convert integer to string
     String pageParam = String(i);
-    String serverPath = LOCALHOST + "/allData?page=" + pageParam;
+    String serverPath = LOCALHOST + "/student/allData?page=" + pageParam;
 
     // Your Domain name with URL path or IP address with path
     if (WiFi.status() == WL_CONNECTED)
@@ -305,29 +316,36 @@ void getAllData()
   http.end();
 }
 
-void extractStrings(String payload) {
+void extractStrings(String payload)
+{
   int startIdx = payload.indexOf("\"") + 1; // Find the first occurrence of "
   int endIdx;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++)
+  {
     endIdx = payload.indexOf("\"", startIdx); // Find the next occurrence of "
-    if (endIdx != -1) {
+    if (endIdx != -1)
+    {
       masters[i] = payload.substring(startIdx, endIdx);
       startIdx = payload.indexOf("\"", endIdx + 1) + 1; // Move to the next string
     }
   }
 }
 
-void getMasters(){
+void getMasters()
+{
   JsonDocument doc;
-  if (WiFi.status() == WL_CONNECTED) {
+  if (WiFi.status() == WL_CONNECTED)
+  {
     HTTPClient http;
     WiFiClient client;
-    http.begin(client,MASTER.c_str());
+    http.begin(client, MASTER.c_str());
 
     int httpCode = http.GET();
-    
-    if (httpCode > 0) {
-      if (httpCode == HTTP_CODE_OK) {
+
+    if (httpCode > 0)
+    {
+      if (httpCode == HTTP_CODE_OK)
+      {
         String payload = http.getString();
         // Deserialize the JSON object into the JSON document
         DeserializationError error = deserializeJson(doc, payload);
@@ -337,13 +355,17 @@ void getMasters(){
         extractStrings(payload);
         gotmasters = true;
       }
-    } else {
-      gotmasters=false;
+    }
+    else
+    {
+      gotmasters = false;
       Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
     }
 
     http.end();
-  } else {
+  }
+  else
+  {
     gotmasters = false;
     Serial.println("WiFi not connected");
   }
@@ -360,7 +382,7 @@ void setcurrdatetime()
   JsonDocument doc;
   for (int i = 1; i < 6; i++)
   {
-    String serverPath = LOCALHOST + "/currentDateTime";
+    String serverPath = LOCALHOST + "/student/currentDateTime";
     // Your Domain name with URL path or IP address with path
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -805,21 +827,10 @@ void sendToBackendAdmin()
   Serial.print("HTTP Response code: ");
   Serial.println(httpResponseCode);
 
-  // Check for errors
-  if (httpResponseCode != 200)
-  {
-    // red (server issue)
-    digitalWrite(D0, HIGH);
-    delay(500);
-    digitalWrite(D0, LOW);
-  }
-  else
-  {
-    // green (ok)
-    digitalWrite(D2, HIGH);
-    delay(500); // 0.5 second delay
-    digitalWrite(D2, LOW);
-  }
+  // green (ok)
+  digitalWrite(D2, HIGH);
+  delay(500); // 0.5 second delay
+  digitalWrite(D2, LOW);
   // Free resources
   http.end();
 }

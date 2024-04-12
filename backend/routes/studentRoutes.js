@@ -62,8 +62,8 @@ router.get("/currentDateTime", (req, res) => {
 // POST route to handle both check-in and check-out
 router.post("/store", async (req, res) => {
   try {
-    const { rfid, year, month, date, hour, minute, entry_type } = req.body;
-
+    const { rfid, year, month, date, hour, minute } = req.body;
+    console.log(req.body);
     // Find the student by RFID
     const student = await userModel.findOne({ rfid: rfid });
 
@@ -71,7 +71,7 @@ router.post("/store", async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
     // Create a new Date object for check-in time
-    const logDateTime = new Date(year, month - 1, date, hour, minute);
+    const logDateTime = new Date(year, month, date, hour, minute);
     //shifting to local time
     logDateTime.setHours(logDateTime.getHours() + 5);
     logDateTime.setMinutes(logDateTime.getMinutes() + 30);
@@ -86,6 +86,9 @@ router.post("/store", async (req, res) => {
     );
 
     let isUpdated = false;
+    let entry_type = "";
+    if (!todayAttendance) entry_type = "checkIn";
+    else entry_type = "checkOut";
 
     if (entry_type === "checkIn") {
       //if not found any entry

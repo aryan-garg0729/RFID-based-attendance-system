@@ -42,6 +42,10 @@ const UserDashboard = () => {
       }
     }
     fetchData();
+    document.body.style.overflowY = "hidden";
+    return () => {
+      document.body.style.overflowY = "scroll";
+    };
   }, [rfid]);
 
   //extracting and beautifying attendance
@@ -223,7 +227,7 @@ const UserDashboard = () => {
                   type="date"
                   name="expiry_date"
                   onChange={inputEvent}
-                  style={{ width: "189px" }}
+                  
                   value={details.expiry_date.slice(0, 10)}
                   required
                 />
@@ -234,7 +238,7 @@ const UserDashboard = () => {
                   name="checkedIn"
                   onChange={inputEvent}
                   value={details.isCheckedIn}
-                  style={{ width: "189px" }}
+                  
                   required
                 >
                   <option value="false">false</option>

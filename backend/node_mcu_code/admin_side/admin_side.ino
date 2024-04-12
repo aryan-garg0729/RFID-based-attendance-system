@@ -29,7 +29,7 @@ void setup()
   pinMode(D2, OUTPUT); // green : successfully send to server
   // Connect to Wi-Fi network
   connectToWifi();
-
+  digitalWrite(D0, HIGH);
   // Initialize RFID reader
   SPI.begin();
   mfrc522.PCD_Init();
@@ -117,21 +117,10 @@ void sendToBackend()
   Serial.print("HTTP Response code: ");
   Serial.println(httpResponseCode);
 
-  // Check for errors
-  if (httpResponseCode != 200)
-  {
-    // red (server issue)
-    digitalWrite(D0, HIGH);
-    delay(500);
-    digitalWrite(D0, LOW);
-  }
-  else
-  {
-    // green (ok)
-    digitalWrite(D2, HIGH);
-    delay(500); // 0.5 second delay
-    digitalWrite(D2, LOW);
-  }
-  // Free resources
+  // green (ok)
+  digitalWrite(D2, HIGH);
+  delay(500); // 0.5 second delay
+  digitalWrite(D2, LOW);
+
   http.end();
 }

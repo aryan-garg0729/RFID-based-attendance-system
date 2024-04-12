@@ -7,7 +7,8 @@ const TableRow = ({ rowData, id, handleEditEntry }) => {
   console.log(throughAdmin);
   const [showEditButton, setShowEditButton] = useState(true);
   checkIn = checkIn.slice(11, 19);
-  checkOut = checkOut.slice(11, 19);
+  if (checkOut) checkOut = checkOut.slice(11, 19);
+  else checkOut = "- - ";
 
   return (
     <tr
