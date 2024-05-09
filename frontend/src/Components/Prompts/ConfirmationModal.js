@@ -13,7 +13,7 @@ const ConfirmationModal = ({ onCancel, onConfirm }) => {
 
   return ReactDOM.createPortal(
     <>
-      <div className="modal-wrapper" onClick={onCancel}>
+      <div clasName="modal-wrapper" onClick={onCancel}>
         <div className="modal-container">
           <h5>Are you sure? </h5>
           <hr />

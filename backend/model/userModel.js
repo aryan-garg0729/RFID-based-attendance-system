@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
-// mongoose.connect(
-//   process.env.DB
-// );
+mongoose.connect(
+  process.env.DB
+);
 //YEH MERA PERSONAL HAI TAAKI ONLINE WALA BLAST NA HO JAE DUE TO UNCONDITIONAL CALLS
-mongoose.connect("mongodb://127.0.0.1:27017/RFID2");
+// mongoose.connect("mongodb://127.0.0.1:27017/RFID2");
 
 const studentSchema = mongoose.Schema({
   name: { type: String, required: true },
