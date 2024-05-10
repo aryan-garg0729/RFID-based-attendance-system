@@ -12,7 +12,7 @@ const char *PASSWORD = "fomn1596";
 #define SS_PIN D4  // Define the GPIO pin connected to the RFID reader's SS pin
 
 // Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.72.108:4000/admin";
+String serverName = "https://rfid-based-attendance-system-1j2o.onrender.com/admin";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String rfid = "";                 // Variable to store the detected RFID UID
 

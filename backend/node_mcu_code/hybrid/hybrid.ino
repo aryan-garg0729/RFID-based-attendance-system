@@ -26,7 +26,7 @@ const char *FILE_POINTER_FILE = "/filepointer.txt";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
-String LOCALHOST = "http://192.168.1.2:4000";
+String LOCALHOST = "https://rfid-based-attendance-system-1j2o.onrender.com";
 // Your Domain name with URL path or IP address with path
 String admin_serverName = LOCALHOST + "/admin";
 String SERVER_NAME = LOCALHOST + "/student";
