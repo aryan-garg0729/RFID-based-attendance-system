@@ -8,9 +8,9 @@ import TableRow from "./TableRow";
 import "./UserDashboard.css";
 import AttendanceEntryModal from "../Prompts/AttendanceEntryModal";
 
-const UPDATE_URL = "http://localhost:4000/admin/save";
-const DELETE_URL = "http://localhost:4000/admin/delete";
-const USER_DASH_URL = "http://localhost:4000/admin/findByRfid";
+const UPDATE_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/save";
+const DELETE_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/delete";
+const USER_DASH_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/findByRfid";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
