@@ -12,7 +12,7 @@ import { COLUMNS } from "./columns";
 import GlobalFilter from "./GlobalFilter";
 import "./FetchAll.css";
 
-const GET_URL = "http://localhost:4000/admin/fetchAll";
+const GET_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/fetchAll";
 
 const FetchAll = () => {
   //memoize the data (do not refresh data after every render)

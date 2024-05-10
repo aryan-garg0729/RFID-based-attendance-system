@@ -4,7 +4,7 @@ import MasterCard from "./MasterCard";
 import { toast } from "react-toastify";
 import errorToast from "../../Prompts/ErrorToast";
 
-const MASTER_URL = "http://localhost:4000/admin/master/names/";
+const MASTER_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/master/names/";
 
 const MasterCardSection = () => {
   const [names, setNames] = useState([]);

@@ -7,8 +7,8 @@ import io from "socket.io-client";
 import "./RegForm.css";
 import ConfirmationModal from "../Prompts/ConfirmationModal";
 
-const UPDATE_URL = "http://localhost:4000/admin/save";
-const DELETE_URL = "http://localhost:4000/admin/delete";
+const UPDATE_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/save";
+const DELETE_URL = "https://rfid-based-attendance-system-1j2o.onrender.com/admin/delete";
 
 const RegForm = () => {
   //   const [fetchedData, setFetchedData] = useState({});
@@ -28,7 +28,7 @@ const RegForm = () => {
   //connecting to server
   useEffect(() => {
     try {
-      const newSocket = io.connect("http://localhost:4000");
+      const newSocket = io.connect("https://rfid-based-attendance-system-1j2o.onrender.com/");
       setSocket(newSocket);
 
       return () => newSocket.close();
