@@ -4,8 +4,10 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
+const { Server } = require("socket.io");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
+var http = require("http");
 const adminRouter = require("./routes/adminRoutes");
 const studentRouter = require("./routes/studentRoutes");
 const masterRouter = require("./routes/masterRoutes");
@@ -42,4 +44,55 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render("error");
 });
+
+var port = normalizePort(process.env.PORT || "4000");
+app.set("port", port);
 module.exports = app;
+var server = http.createServer(app);
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "DELETE", "PUT"],
+  },
+});
+
+io.on("connection", async (socket) => {
+  try {
+    console.log("FrontEnd RegForm connected at port 3000 using SocketIO");
+
+    //Testing the Connection
+    io.emit(
+      "test-connection",
+      `"Server is listening at port"`
+    );
+
+    socket.on("disconnect", () => {
+      console.log("RegForm disconnected");
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// io.listen(SOCKET_IO_PORT);
+
+//THIS IO WILL BE USED IN /admin route TO EMIT SCANNED RFID DATA
+module.exports = {io, server, app};
