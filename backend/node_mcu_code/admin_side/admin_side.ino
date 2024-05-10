@@ -5,8 +5,8 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
-const char *SSID = "S10";
-const char *PASSWORD = "fomn1596";
+const char *SSID = "Note8";
+const char *PASSWORD = "watermelon";
 
 #define RST_PIN D3 // Define the GPIO pin connected to the RFID reader's RST pin
 #define SS_PIN D4  // Define the GPIO pin connected to the RFID reader's SS pin
@@ -102,11 +102,16 @@ String getRfid()
 
 void sendToBackend()
 {
-  WiFiClient client;
+  WiFiClientSecure client;
   HTTPClient http;
-
+  client.setInsecure();
   connectToWifi();
   // Your Domain name with URL path or IP address with path
+  // if (!client.connect(serverName, 443)) {
+  //   Serial.println("Connection to server failed!");
+  //   return;
+  // }
+
   http.begin(client, serverName);
 
   http.addHeader("Content-Type", "application/json");
@@ -118,9 +123,12 @@ void sendToBackend()
   Serial.println(httpResponseCode);
 
   // green (ok)
-  digitalWrite(D2, HIGH);
-  delay(500); // 0.5 second delay
-  digitalWrite(D2, LOW);
+  if(httpResponseCode == 200)
+  {
+    digitalWrite(D2, HIGH);
+    delay(500); // 0.5 second delay
+    digitalWrite(D2, LOW);
+  }
 
   http.end();
 }

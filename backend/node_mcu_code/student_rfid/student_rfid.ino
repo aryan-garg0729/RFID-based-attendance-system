@@ -3,12 +3,12 @@
 #include <MFRC522.h>
 #include <ArduinoJson.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include <FS.h>
 
 // CONSTANTS FOR WIFI CONNECTION
-const char *SSID = "S10";
-const char *PASSWORD = "fomn1596";
+const char *SSID = "Note8";
+const char *PASSWORD = "watermelon";
 
 unsigned long lastMillis = 0;
 const unsigned long interval = 1000; // 1 second interval to update time every second
@@ -213,8 +213,9 @@ void initializeSPIFFS()
 // fetch all data from server and save to database.txt file
 void getAllData()
 {
-  WiFiClient client;
+  WiFiClientSecure client;
   HTTPClient http;
+  client.setInsecure();
 
   // StaticJsonBuffer<300> JSONBuffer;
   JsonDocument doc;
@@ -301,7 +302,8 @@ void getMasters(){
   JsonDocument doc;
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    WiFiClient client;
+    WiFiClientSecure client;
+    client.setInsecure();
     http.begin(client,MASTER.c_str());
 
     int httpCode = http.GET();
@@ -333,8 +335,9 @@ void getMasters(){
 void setcurrdatetime()
 {
   // CALL TO BACKEND TO FETCH DATE AND TIME
-  WiFiClient client;
+  WiFiClientSecure client;
   HTTPClient http;
+  client.setInsecure();
 
   // WILL TRY 5 TIMES TO FETCH DATE AND TIME
   JsonDocument doc;
@@ -616,9 +619,10 @@ int sendToBackend()
           connectToWifi();
           continue;
         }
-        WiFiClient client;
+        WiFiClientSecure client;
         HTTPClient http;
-
+        client.setInsecure();
+      
         // Your Domain name with URL path or IP address with path
         http.begin(client, STORE);
 

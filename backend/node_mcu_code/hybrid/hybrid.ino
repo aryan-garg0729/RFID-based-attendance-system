@@ -7,8 +7,8 @@
 #include <FS.h>
 
 // CONSTANTS FOR WIFI CONNECTION
-const char *SSID = "Airtel_isha_6157";
-const char *PASSWORD = "air04221";
+const char *SSID = "Note8";
+const char *PASSWORD = "watermelon";
 
 unsigned long lastMillis = 0;
 const unsigned long interval = 1000; // 1 second interval to update time every second
@@ -812,9 +812,9 @@ void formatSPIFFS()
 
 void sendToBackendAdmin()
 {
-  WiFiClient client;
+  WiFiClientSecure client;
   HTTPClient http;
-
+  client.setInsecure();
   connectToWifi();
   // Your Domain name with URL path or IP address with path
   http.begin(client, admin_serverName);
