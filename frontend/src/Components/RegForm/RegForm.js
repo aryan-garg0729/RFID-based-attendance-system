@@ -28,7 +28,7 @@ const RegForm = () => {
   //connecting to server
   useEffect(() => {
     try {
-      const newSocket = io.connect("http://localhost:5000");
+      const newSocket = io.connect("http://localhost:4000");
       setSocket(newSocket);
 
       return () => newSocket.close();
