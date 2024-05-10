@@ -12,36 +12,36 @@ const exp = require("constants");
 
 // -----------------------Admin side MCU requests here---------------------------
 // takes rfid from nodeMCU and returns all details to frontend regForm
-let previousRfidData = {};
-router.post("/", async function (req, res) {
-  try {
-    let rfid = req.body.rfid; // got the rfid
-    console.log("rfid" , rfid);
-    const data = await userModel.findOne({ rfid: rfid });
+// let previousRfidData = {};
+// router.post("/", async function (req, res) {
+//   try {
+//     let rfid = req.body.rfid; // got the rfid
+//     console.log("rfid" , rfid);
+//     const data = await userModel.findOne({ rfid: rfid });
 
-    //either sending whole data or rfid only
-    console.log("data : ", data);
-    if (!data) {
-      previousRfidData = {
-        name: "",
-        rfid: rfid,
-        roll_no: "",
-        checkedIn: "",
-        expiry_date: new Date(Date.now() + 2592000000).toISOString(),
-        attendance: [],
-      };
-      res.status(404).send({ message: "user not found" });
-    } else {
-      previousRfidData = data;
-      res.status(200).send({ message: "user found", data });
-    }
-    //emitting searched data to frontend
-    io.emit("scannedRfidData", previousRfidData);
-  } catch (e) {
-    console.error("Error finding user:", e);
-    res.status(500).send("Error finding user");
-  }
-});
+//     //either sending whole data or rfid only
+//     console.log("data : ", data);
+//     if (!data) {
+//       previousRfidData = {
+//         name: "",
+//         rfid: rfid,
+//         roll_no: "",
+//         checkedIn: "",
+//         expiry_date: new Date(Date.now() + 2592000000).toISOString(),
+//         attendance: [],
+//       };
+//       res.status(404).send({ message: "user not found" });
+//     } else {
+//       previousRfidData = data;
+//       res.status(200).send({ message: "user found", data });
+//     }
+//     //emitting searched data to frontend
+//     io.emit("scannedRfidData", previousRfidData);
+//   } catch (e) {
+//     console.error("Error finding user:", e);
+//     res.status(500).send("Error finding user");
+//   }
+// });
 
 // create and update in same route
 router.post("/save", async (req, res) => {
