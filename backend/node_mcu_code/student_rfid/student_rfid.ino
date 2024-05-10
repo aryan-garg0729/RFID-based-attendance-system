@@ -12,22 +12,22 @@ const char *PASSWORD = "watermelon";
 
 unsigned long lastMillis = 0;
 const unsigned long interval = 1000; // 1 second interval to update time every second
-int DEFAULT_TIME[3] = {7, 0, 0};     // HOURS MINUTES SECONDS
+int DEFAULT_TIME[3] = {7, 0, 0};     // HOURS MINUTES SECONDS "07:00 AM"
 int CURR_TIME[3] = {0, 0, 0};
 int CURR_DATE[3] = {1970, 1, 1}; // YEAR MONTH DATE
 
-
 // Constants for file paths
-const char *DATABASE_FILE_PATH = "/database.txt"; // RFID EXP_YEAR EXP_MONTH EXP_DATE
-const char *LOG_FILE_PATH = "/log.txt";
-const char *FILE_POINTER_FILE = "/filepointer.txt";
+const char *DATABASE_FILE_PATH = "/database.txt";   // RFID EXP_YEAR EXP_MONTH EXP_DATE
+const char *LOG_FILE_PATH = "/log.txt";             // stores attendance log
+const char *FILE_POINTER_FILE = "/filepointer.txt"; // file pointer to log file that contain start line
+#define RST_PIN D3                                  // Define the GPIO pin connected to the RFID reader's RST pin
 
-#define RST_PIN D3                // Define the GPIO pin connected to the RFID reader's RST pin
 #define SS_PIN D4                 // Define the GPIO pin connected to the RFID reader's SS pin
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 // Your Domain name with URL path or IP address with path
 String LOCALHOST = "https://rfid-based-attendance-system-1j2o.onrender.com";
+const char *host = "rfid-based-attendance-system-1j2o.onrender.com"; // for POST requests
 String STORE = LOCALHOST + "/student/store";
 String MASTER = LOCALHOST + "/admin/master/names";
 String rfid = ""; // Variable to store the detected RFID UID
@@ -60,25 +60,27 @@ int logAndAuth();
 void readAllDataFromFile(String path);
 void formatSPIFFS();
 void sendToBackendAdmin();
+
+// first setup called
 void setup()
 {
   // Set CPU frequency to 160MHz
   // system_update_cpu_freq(SYS_CPU_160MHZ);
-   
+
   pinMode(D0, OUTPUT); // red
   pinMode(D1, OUTPUT); // yellow
   pinMode(D2, OUTPUT); // green
-  pinMode(D8, OUTPUT); // blue (white)
-  // digitalWrite(D8,HIGH);
+  pinMode(D8, OUTPUT); // white
 
   // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
-  // formatSPIFFS();
+  formatSPIFFS();
 
   digitalWrite(D8, HIGH);
 
   // setting baud rate for serial communication
   Serial.begin(9600);
   delay(10);
+
   // ISKO INFINITY TIMES NAHI CHALALNA IF WIFI AND GETDATA NAHI MILA TO
   while (!gotdata || !gotCurrDateAndTime || !gotmasters)
   {
@@ -90,10 +92,12 @@ void setup()
     // getalldata from database if wifi is connected
     if (WiFi.status() == WL_CONNECTED)
     {
-      if(!gotdata)getAllData();
-      // gotdata = 1;
-      if(!gotCurrDateAndTime)setcurrdatetime();
-      if(!gotmasters)getMasters();
+      if (!gotdata)
+        getAllData();
+      if (!gotCurrDateAndTime)
+        setcurrdatetime();
+      if (!gotmasters)
+        getMasters();
     }
   }
 
@@ -113,25 +117,13 @@ void setup()
   delay(100);
   Serial.println("RFID reader initialized");
 
-  // // Creating an empty log file
-  // File log = SPIFFS.open(LOG_FILE_PATH, "w");
-  // if (!log)
-  // {
-  //   Serial.println("Failed to open file for writing");
-  // }
-  // else
-  // {
-  //   log.close();
-  //   Serial.println("log file created");
-  // }
-
-   digitalWrite(D8, LOW);
+  digitalWrite(D8, LOW);
 }
 
 void loop()
 {
   updateTime();
-  if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19)   //MORNING 7AM to EVE 7PM
+  if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19) // MORNING 7AM to EVE 7PM
   // if (1)  //for testing perpose
   {
     // Scan for RFID tags/cards
@@ -142,11 +134,13 @@ void loop()
       return;
     }
     // compare masters
-    for(int i = 0;i<3;i++){
-      if(masters[i]==rfid){
+    for (int i = 0; i < 3; i++)
+    {
+      if (masters[i] == rfid)
+      {
         digitalWrite(D8, HIGH);
         sendToBackend();
-        digitalWrite(D8, LOW); 
+        digitalWrite(D8, LOW);
         return;
       }
     }
@@ -160,19 +154,20 @@ void loop()
   {
     digitalWrite(D8, HIGH);
     sendToBackend();
-    digitalWrite(D8, LOW); 
+    digitalWrite(D8, LOW);
 
     // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
     formatSPIFFS();
     // sir se puchna h format file ka
   }
-
 }
 
+// connect to WiFi
 bool connectToWifi()
 {
-  // Connect to Wi-Fi network try 15 times
+  // Connect to Wi-Fi network within 6 trials
   int times = 0;
+  digitalWrite(D1, HIGH);
   while (WiFi.status() != WL_CONNECTED && times < 6)
   {
     Serial.println();
@@ -192,10 +187,20 @@ bool connectToWifi()
       Serial.println(SSID);
       Serial.print("IP address: ");
       Serial.println(WiFi.localIP());
+      // yellow light blinks 3 time when connected to wifi else not
+      digitalWrite(D1, LOW);
+      delay(100);
+      digitalWrite(D1, HIGH);
+      delay(100);
+      digitalWrite(D1, LOW);
+      delay(100);
+      digitalWrite(D1, HIGH);
+      delay(100);
+      digitalWrite(D1, LOW);
       break;
     }
   }
-
+  digitalWrite(D1, LOW);
   return (WiFi.status() == WL_CONNECTED);
 }
 
@@ -249,10 +254,6 @@ void getAllData()
       arr = doc.as<JsonArray>();
       for (JsonObject obj : arr)
       {
-        // Serial.println(obj["rfid"].as<String>());
-        // Serial.println(obj["expiry_date"].as<String>());
-        // Serial.println(arr.size());
-
         // creating file for each rfid name record
         String filename = "/" + obj["rfid"].as<String>() + ".txt";
         String dataChunk = obj["expiry_date"].as<String>();
@@ -269,6 +270,7 @@ void getAllData()
     }
     else if (httpResponseCode == 404)
     {
+      // fetched all data
       gotdata = true;
       break;
     }
@@ -286,30 +288,39 @@ void getAllData()
   http.end();
 }
 
-void extractStrings(String payload) {
+// extract strings
+void extractStrings(String payload)
+{
   int startIdx = payload.indexOf("\"") + 1; // Find the first occurrence of "
   int endIdx;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++)
+  {
     endIdx = payload.indexOf("\"", startIdx); // Find the next occurrence of "
-    if (endIdx != -1) {
+    if (endIdx != -1)
+    {
       masters[i] = payload.substring(startIdx, endIdx);
       startIdx = payload.indexOf("\"", endIdx + 1) + 1; // Move to the next string
     }
   }
 }
 
-void getMasters(){
+// get masters rfid to perform sendToBackend
+void getMasters()
+{
   JsonDocument doc;
-  if (WiFi.status() == WL_CONNECTED) {
+  if (WiFi.status() == WL_CONNECTED)
+  {
     HTTPClient http;
     WiFiClientSecure client;
     client.setInsecure();
-    http.begin(client,MASTER.c_str());
+    http.begin(client, MASTER.c_str());
 
     int httpCode = http.GET();
-    
-    if (httpCode > 0) {
-      if (httpCode == HTTP_CODE_OK) {
+
+    if (httpCode > 0)
+    {
+      if (httpCode == HTTP_CODE_OK)
+      {
         String payload = http.getString();
         // Deserialize the JSON object into the JSON document
         DeserializationError error = deserializeJson(doc, payload);
@@ -319,13 +330,18 @@ void getMasters(){
         extractStrings(payload);
         gotmasters = true;
       }
-    } else {
-      gotmasters=false;
+    }
+    else
+    {
+      gotmasters = false;
       Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
+      glowLED(500);
     }
 
     http.end();
-  } else {
+  }
+  else
+  {
     gotmasters = false;
     Serial.println("WiFi not connected");
   }
@@ -351,6 +367,7 @@ void setcurrdatetime()
     }
     else
     {
+
       Serial.println("Wifi disconnected can't connect to server");
       iswifi = false;
       gotCurrDateAndTime = false;
@@ -387,6 +404,7 @@ void setcurrdatetime()
     {
       Serial.print("Server Error code: ");
       Serial.println(httpResponseCode);
+      glowLED(500);
     }
   }
   if (gotCurrDateAndTime == false)
@@ -475,7 +493,7 @@ void glowLED(int status)
   {
     // red (not found)
     digitalWrite(D0, HIGH);
-    delay(500); // 1 second delay
+    delay(500); // 0.5 second delay
     digitalWrite(D0, LOW);
   }
   else if (status == 403)
@@ -561,6 +579,7 @@ int readLastFilePointer()
   file.close();
   return lineNumber;
 }
+
 // Function to write the current file pointer position to filepointer.txt
 void writeCurrentFilePointer(int lineNumber)
 {
@@ -607,7 +626,7 @@ int sendToBackend()
     if (spaceIndex != -1)
     {
       // Extract RFID and expiry date using substring
-      String data = "{\"rfid\":\"" + id + "\", \"year\":\"" + year + "\", \"month\":\"" + month + "\", \"date\":\"" + date + "\", \"hour\":\"" + hour + "\", \"minute\":\"" + minute + "\"}";
+      String jsonData = "{\"rfid\":\"" + id + "\", \"year\":\"" + year + "\", \"month\":\"" + month + "\", \"date\":\"" + date + "\", \"hour\":\"" + hour + "\", \"minute\":\"" + minute + "\"}";
       int httpResponseCode = 0;
       // Serial.println(data);
       // Serial.println(startLine);
@@ -619,18 +638,62 @@ int sendToBackend()
           connectToWifi();
           continue;
         }
+        // sending data to server
         WiFiClientSecure client;
-        HTTPClient http;
         client.setInsecure();
-      
-        // Your Domain name with URL path or IP address with path
-        http.begin(client, STORE);
 
-        http.addHeader("Content-Type", "application/json");
-        httpResponseCode = http.POST(data);
-        http.end();
-        Serial.println(httpResponseCode);
-        glowLED(500);
+        // Your Domain name with URL path or IP address with path
+        if (!client.connect(host, 443))
+        { // works!
+          Serial.println("connection failed");
+          return 500;
+        }
+
+        String url = "/student/store";
+
+        // Prepare JSON data
+        // String jsonData = "{\"rfid\":\"" + rfid + "\"}";
+        Serial.print("Sending JSON data: ");
+        Serial.println(jsonData);
+
+        // This will send the request to the server
+        client.print(String("POST ") + url + " HTTP/1.1\r\n" +
+                     "Host: " + host + "\r\n" +
+                     "Content-Type: application/json\r\n" +
+                     "Content-Length: " + String(jsonData.length()) + "\r\n" +
+                     "Connection: close\r\n\r\n" +
+                     jsonData);
+
+        Serial.println();
+        Serial.println("closing connection");
+
+        // Wait for response
+        while (client.connected())
+        {
+          Serial.print("inside while\n");
+          String line = client.readStringUntil('\n');
+          Serial.print(line);
+          Serial.println();
+          if (line.startsWith("HTTP/1.1"))
+          {
+            httpResponseCode = line.substring(9, 12).toInt();
+            Serial.print("Response code: ");
+            Serial.println(httpResponseCode);
+            if (httpResponseCode == 200)
+            {
+              digitalWrite(D3, LOW);
+              delay(500);
+              digitalWrite(D3, HIGH);
+            }
+            else
+            {
+              digitalWrite(D0, HIGH);
+              delay(500);
+              digitalWrite(D0, LOW);
+            }
+            break; // Stop reading after getting the response code
+          }
+        }
       }
 
       // udpating log filepointer startline for each line
