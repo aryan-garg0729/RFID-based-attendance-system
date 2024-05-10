@@ -21,7 +21,7 @@ function getDateTimeObj(arg) {
 router.get("/allData", async (req, res) => {
   try {
     let page = req.query.page ? parseInt(req.query.page) : 1; // Get the requested page number from query parameters
-    let pageSize = 100; // Define the number of items per page
+    let pageSize = 2; // Define the number of items per page
 
     // Calculate the skip value based on the requested page number and page size
     let skip = (page - 1) * pageSize;

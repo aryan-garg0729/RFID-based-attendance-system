@@ -94,6 +94,7 @@ void setup()
     {
       if (!gotdata)
         getAllData();
+        // gotdata = true;
       if (!gotCurrDateAndTime)
         setcurrdatetime();
       if (!gotmasters)
@@ -222,6 +223,7 @@ void getAllData()
   HTTPClient http;
   client.setInsecure();
 
+  Serial.println("inside getAllData");
   // StaticJsonBuffer<300> JSONBuffer;
   JsonDocument doc;
   for (int i = 1;; i++)
@@ -233,7 +235,9 @@ void getAllData()
 
     // Your Domain name with URL path or IP address with path
     if (WiFi.status() == WL_CONNECTED)
+    {
       http.begin(client, serverPath.c_str());
+    }
     else
     {
       Serial.println("Wifi disconnected can't connect to server");
@@ -244,7 +248,8 @@ void getAllData()
 
     // Send HTTP GET request
     int httpResponseCode = http.GET();
-
+    delay(1000);
+    // yield();  //to prevent crash
     if (httpResponseCode == 200)
     {
 
@@ -282,8 +287,9 @@ void getAllData()
       glowLED(500);
       i--;
     }
-  }
 
+  }
+  Serial.println("Exiting meet");
   // Free resources
   http.end();
 }
