@@ -2,7 +2,7 @@ const express = require("express");
 
 const userModel = require("../model/userModel");
 const router = express.Router();
-const io = require("../bin/www.js");
+const io = require("./websocket");
 const exp = require("constants");
 
 // /* GET home page. */
