@@ -1,10 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <SPI.h>
 #include <MFRC522.h>
-
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
+// WiFi ssid and password
 const char *SSID = "Note8";
 const char *PASSWORD = "watermelon";
 
@@ -13,10 +13,11 @@ const char *PASSWORD = "watermelon";
 
 // Your Domain name with URL path or IP address with path
 // String serverName = "https://rfid-based-attendance-system-1j2o.onrender.com/admin";
-const char* host = "rfid-based-attendance-system-1j2o.onrender.com";
+const char *HOST = "rfid-based-attendance-system-1j2o.onrender.com";
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 String rfid = "";                 // Variable to store the detected RFID UID
 
+// functions used
 bool connectToWifi();
 String getRfid();
 void sendToBackend();
@@ -25,9 +26,10 @@ void setup()
 {
   Serial.begin(9600);
   delay(10);
-  pinMode(D0, OUTPUT); // red : server issue
+  pinMode(D0, OUTPUT); // red    : server issue
   pinMode(D1, OUTPUT); // yellow : connecting to wifi
-  pinMode(D2, OUTPUT); // green : successfully send to server
+  pinMode(D2, OUTPUT); // green  : successfully send to server
+  pinMode(D8, OUTPUT); // white  :
   // Connect to Wi-Fi network
   connectToWifi();
   digitalWrite(D0, HIGH);
@@ -106,15 +108,15 @@ void sendToBackend()
   WiFiClientSecure client;
   client.setInsecure();
   connectToWifi();
-  
+
   // Your Domain name with URL path or IP address with path
-  if (!client.connect(host, 443)) { //works!
+  if (!client.connect(HOST, 443))
+  {
     Serial.println("connection failed");
     return;
   }
 
-
-  String url = "/admin";
+  String URL = "/admin";
 
   // Prepare JSON data
   String jsonData = "{\"rfid\":\"" + rfid + "\"}";
@@ -122,57 +124,39 @@ void sendToBackend()
   Serial.println(jsonData);
 
   // This will send the request to the server
-  client.print(String("POST ") + url + " HTTP/1.1\r\n" +
-               "Host: " + host + "\r\n" +
+  client.print(String("POST ") + URL + " HTTP/1.1\r\n" +
+               "Host: " + HOST + "\r\n" +
                "Content-Type: application/json\r\n" +
                "Content-Length: " + String(jsonData.length()) + "\r\n" +
                "Connection: close\r\n\r\n" +
                jsonData);
 
-  Serial.println();
-  Serial.println("closing connection");
+  // Serial.println("closing connection");
 
   // Wait for response
-  while (client.connected()) {
-    Serial.print("inside while\n");
+  while (client.connected())
+  {
     String line = client.readStringUntil('\n');
-    Serial.print(line);
-    Serial.println();
-    if (line.startsWith("HTTP/1.1")) {
+    if (line.startsWith("HTTP/1.1"))
+    {
       int statusCode = line.substring(9, 12).toInt();
       Serial.print("Response code: ");
       Serial.println(statusCode);
-        if(statusCode == 200)
-        {
-          Serial.print("GREEN LIGHT\n");
-          digitalWrite(D2, HIGH);
-          delay(500); // 0.5 second delay
-          digitalWrite(D2, LOW);
-        }
-        else {
-          digitalWrite(D0, LOW);
-          delay(500); // 0.5 second delay
-          digitalWrite(D0, HIGH);
-        }
+      if (statusCode == 200)
+      {
+        // Serial.print("GREEN LIGHT\n");
+        digitalWrite(D2, HIGH);
+        delay(500); // 0.5 second delay
+        digitalWrite(D2, LOW);
+      }
+      else
+      {
+        digitalWrite(D0, LOW);
+        delay(500); // 0.5 second delay
+        digitalWrite(D0, HIGH);
+      }
       break; // Stop reading after getting the response code
     }
   }
-  // http.begin(client, serverName);
-
-  // http.addHeader("Content-Type", "application/json");
-  // String data = "{\"rfid\":\"" + rfid + "\"}";
-  // Serial.println(data);
-  // int httpResponseCode = http.POST(data);
-
-  // Serial.print("HTTP Response code: ");
-  // Serial.println(httpResponseCode);
-
-
-
-
-
-  // green (ok)
-
-
-  // http.end();
+  client.stop(); // disconnection
 }

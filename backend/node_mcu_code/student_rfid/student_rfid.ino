@@ -67,13 +67,13 @@ void setup()
   // Set CPU frequency to 160MHz
   // system_update_cpu_freq(SYS_CPU_160MHZ);
 
-  pinMode(D0, OUTPUT); // red
-  pinMode(D1, OUTPUT); // yellow
-  pinMode(D2, OUTPUT); // green
-  pinMode(D8, OUTPUT); // white
+  pinMode(D0, OUTPUT); // red    🔴
+  pinMode(D1, OUTPUT); // yellow 🟡
+  pinMode(D2, OUTPUT); // green  🟢
+  pinMode(D8, OUTPUT); // white  🤍
 
   // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
-  formatSPIFFS();
+  // formatSPIFFS();
 
   digitalWrite(D8, HIGH);
 
@@ -92,13 +92,13 @@ void setup()
     // getalldata from database if wifi is connected
     if (WiFi.status() == WL_CONNECTED)
     {
-      if (!gotdata)
-        getAllData();
-        // gotdata = true;
       if (!gotCurrDateAndTime)
         setcurrdatetime();
       if (!gotmasters)
         getMasters();
+      // gotdata = true;
+      if (!gotdata)
+        getAllData();
     }
   }
 
@@ -217,49 +217,70 @@ void initializeSPIFFS()
 }
 
 // fetch all data from server and save to database.txt file
+// Custom debug function for HTTP debug output
+// void httpDebugPrint(char *message)
+// {
+//   Serial.print("[HTTP DEBUG] ");
+//   Serial.println(message);
+// }
 void getAllData()
 {
-  WiFiClientSecure client;
-  HTTPClient http;
-  client.setInsecure();
 
-  Serial.println("inside getAllData");
-  // StaticJsonBuffer<300> JSONBuffer;
+  Serial.println("Inside getAllData");
+    WiFiClientSecure client;
+    HTTPClient http;
+    client.setInsecure();
+
+    http.setTimeout(10000);
   JsonDocument doc;
   for (int i = 1;; i++)
   {
-    // initializeSPIFFS();
-    // Convert integer to string
+
+
     String pageParam = String(i);
     String serverPath = LOCALHOST + "/student/allData?page=" + pageParam;
-
-    // Your Domain name with URL path or IP address with path
+    Serial.print("SERVER PATH: ");
+    Serial.println(serverPath);
     if (WiFi.status() == WL_CONNECTED)
     {
+      Serial.println("Connecting to server...");
       http.begin(client, serverPath.c_str());
     }
     else
     {
-      Serial.println("Wifi disconnected can't connect to server");
+      Serial.println("WiFi disconnected, can't connect to server");
       iswifi = false;
       gotdata = false;
       break;
     }
 
-    // Send HTTP GET request
     int httpResponseCode = http.GET();
-    delay(1000);
-    // yield();  //to prevent crash
+    delay(500);
+    // Print headers
+    Serial.println("Response Headers:");
+    String headers = http.getString();
+    Serial.println(headers);
+
+    Serial.print("httpResponseCode");
+    Serial.println(httpResponseCode);
+
     if (httpResponseCode == 200)
     {
+      // Serial.println("Response code 200, data fetched successfully");
 
       String payload = http.getString();
+      DeserializationError jsonError = deserializeJson(doc, payload);
+      if (jsonError)
+      {
+        Serial.print("JSON deserialization error: ");
+        Serial.println(jsonError.c_str());
+        // Handle the error (e.g., return or break)
+        break;
+      }
 
-      deserializeJson(doc, payload);
       arr = doc.as<JsonArray>();
       for (JsonObject obj : arr)
       {
-        // creating file for each rfid name record
         String filename = "/" + obj["rfid"].as<String>() + ".txt";
         String dataChunk = obj["expiry_date"].as<String>();
         File rfidFile = SPIFFS.open(filename, "w");
@@ -269,13 +290,15 @@ void getAllData()
           rfidFile.close();
           continue;
         }
+        Serial.println(dataChunk);
         rfidFile.println(dataChunk);
         rfidFile.close();
       }
+      gotdata = true;
     }
     else if (httpResponseCode == 404)
     {
-      // fetched all data
+      Serial.println("Data not found (404)");
       gotdata = true;
       break;
     }
@@ -283,15 +306,13 @@ void getAllData()
     {
       Serial.print("Error code: ");
       Serial.println(httpResponseCode);
-      // glow led
-      glowLED(500);
+      glowLED(500); // Assuming glowLED function is for an LED indication
       i--;
     }
-
+    http.end();
   }
-  Serial.println("Exiting meet");
-  // Free resources
-  http.end();
+
+  Serial.println("Exiting getAllData");
 }
 
 // extract strings
