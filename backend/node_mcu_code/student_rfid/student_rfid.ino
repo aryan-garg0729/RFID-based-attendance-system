@@ -6,6 +6,8 @@
 #include <WiFiClientSecure.h>
 #include <FS.h>
 
+#define RST_PIN D3 // Define the GPIO pin connected to the RFID reader's RST pin
+#define SS_PIN D4  // Define the GPIO pin connected to the RFID reader's SS pin
 // CONSTANTS FOR WIFI CONNECTION
 const char *SSID = "Note8";
 const char *PASSWORD = "watermelon";
@@ -15,17 +17,16 @@ const unsigned long interval = 1000; // 1 second interval to update time every s
 int DEFAULT_TIME[3] = {7, 0, 0};     // HOURS MINUTES SECONDS "07:00 AM"
 int CURR_TIME[3] = {0, 0, 0};
 int CURR_DATE[3] = {1970, 1, 1}; // YEAR MONTH DATE
+String masters[3] = {"#", "#", "#"};
 
 // Constants for file paths
 const char *DATABASE_FILE_PATH = "/database.txt";   // RFID EXP_YEAR EXP_MONTH EXP_DATE
 const char *LOG_FILE_PATH = "/log.txt";             // stores attendance log
 const char *FILE_POINTER_FILE = "/filepointer.txt"; // file pointer to log file that contain start line
-#define RST_PIN D3                                  // Define the GPIO pin connected to the RFID reader's RST pin
+const char *MASTERS_FILE = "/masters.txt";
+const char *DATE_TIME_FILE = "/datetime.txt";
 
-#define SS_PIN D4                 // Define the GPIO pin connected to the RFID reader's SS pin
-MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
-
-// Your Domain name with URL path or IP address with path
+// Domain name with URL path or IP address with path
 String LOCALHOST = "https://rfid-based-attendance-system-1j2o.onrender.com";
 const char *host = "rfid-based-attendance-system-1j2o.onrender.com"; // for POST requests
 String STORE = LOCALHOST + "/student/store";
@@ -39,14 +40,16 @@ bool gotCurrDateAndTime = false;
 bool gotmasters = false;
 bool isSpiFFS = false;
 
-String masters[3];
+MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
-// MY 14 FUNCTIONS (IN ORDER)
+// MY FUNCTIONS USED (IN ORDER)
 bool connectToWifi();
 void initializeSPIFFS();
 void getAllData();
 void extractStrings(String payload);
 void getMasters();
+void fetchPreviousDateTime();
+void storeDatetimeToFile();
 void setcurrdatetime();
 void updateTime();
 String getRfid();
@@ -59,7 +62,8 @@ bool checkExpiry(int expDate[]);
 int logAndAuth();
 void readAllDataFromFile(String path);
 void formatSPIFFS();
-void sendToBackendAdmin();
+void blinkLEDTimes(String LED, int times, int delay, String returning_state);
+void blinkAllLEDs(int times, int dlay);
 
 // first setup called
 void setup()
@@ -67,6 +71,7 @@ void setup()
   // Set CPU frequency to 160MHz
   // system_update_cpu_freq(SYS_CPU_160MHZ);
 
+  // Initialize pins
   pinMode(D0, OUTPUT); // red    🔴
   pinMode(D1, OUTPUT); // yellow 🟡
   pinMode(D2, OUTPUT); // green  🟢
@@ -81,25 +86,27 @@ void setup()
   Serial.begin(9600);
   delay(10);
 
-  // ISKO INFINITY TIMES NAHI CHALALNA IF WIFI AND GETDATA NAHI MILA TO
-  while (!gotdata || !gotCurrDateAndTime || !gotmasters)
+  // mandatory to initialize NODEMCU file system
+  initializeSPIFFS();
+
+  int loopTimes = 2;
+
+  while (loopTimes > 0 && (!gotdata || !gotCurrDateAndTime || !gotmasters))
   {
+    loopTimes--;
     iswifi = connectToWifi();
 
-    // mandatory to initialize NODEMCU file system
-    initializeSPIFFS();
-
     // getalldata from database if wifi is connected
-    if (WiFi.status() == WL_CONNECTED)
-    {
-      if (!gotCurrDateAndTime)
-        setcurrdatetime();
-      if (!gotmasters)
-        getMasters();
-      // gotdata = true;
-      if (!gotdata)
-        getAllData();
-    }
+    // gotdata = true;
+    // gotCurrDateAndTime = true;
+    // gotmasters = true;
+    if (!gotCurrDateAndTime)
+      setcurrdatetime();
+    if (!gotmasters)
+      getMasters();
+    if (!gotdata)
+      getAllData();
+    yield();
   }
 
   // printing database.txt file
@@ -112,6 +119,21 @@ void setup()
   Serial.print("-");
   Serial.println(CURR_DATE[2]);
 
+  // Serial.print("Default time: ");
+  // Serial.print(DEFAULT_TIME[0]);
+  // Serial.print("-");
+  // Serial.print(DEFAULT_TIME[1]);
+  // Serial.print("-");
+  // Serial.println(DEFAULT_TIME[2]);
+
+  // Printing masters
+  Serial.print("Masters : ");
+  for (int i = 0; i < 3; i++)
+  {
+    Serial.print(masters[i]);
+    Serial.print(" , ");
+  }
+  Serial.println();
   // Initialize RFID reader
   SPI.begin();
   mfrc522.PCD_Init();
@@ -124,7 +146,7 @@ void setup()
 void loop()
 {
   updateTime();
-  if (CURR_TIME[0] >= 7 && CURR_TIME[0] <= 19) // MORNING 7AM to EVE 7PM
+  if (CURR_TIME[0] >= 1 && CURR_TIME[0] <= 14) // MORNING 7AM to EVE 9PM
   // if (1)  //for testing perpose
   {
     // Scan for RFID tags/cards
@@ -158,7 +180,7 @@ void loop()
     digitalWrite(D8, LOW);
 
     // CLEANUP: DANGER TO LOG FILE USE WITH CAUTION!!!
-    formatSPIFFS();
+    // formatSPIFFS();
     // sir se puchna h format file ka
   }
 }
@@ -169,12 +191,13 @@ bool connectToWifi()
   // Connect to Wi-Fi network within 6 trials
   int times = 0;
   digitalWrite(D1, HIGH);
-  while (WiFi.status() != WL_CONNECTED && times < 6)
+  while (WiFi.status() != WL_CONNECTED && times < 3)
   {
+    yield();
     Serial.println();
     Serial.print("Connecting to: ");
     Serial.println(SSID);
-    Serial.println("..........");
+    Serial.print("..........");
     Serial.print("Retrying Times: ");
     Serial.println(times);
     // connecting to wifi
@@ -188,16 +211,8 @@ bool connectToWifi()
       Serial.println(SSID);
       Serial.print("IP address: ");
       Serial.println(WiFi.localIP());
-      // yellow light blinks 3 time when connected to wifi else not
-      digitalWrite(D1, LOW);
-      delay(100);
-      digitalWrite(D1, HIGH);
-      delay(100);
-      digitalWrite(D1, LOW);
-      delay(100);
-      digitalWrite(D1, HIGH);
-      delay(100);
-      digitalWrite(D1, LOW);
+      // yellow light blinks 5 time when connected to wifi else not
+      blinkLEDTimes("D1", 5, 500, "LOW");
       break;
     }
   }
@@ -210,36 +225,29 @@ void initializeSPIFFS()
 {
   while (!SPIFFS.begin())
   {
-    delay(1000);
+    delay(500);
     Serial.println("Failed to initialize SPIFFS");
   }
   Serial.println("SPIFFS initialized successfully");
 }
 
 // fetch all data from server and save to database.txt file
-// Custom debug function for HTTP debug output
-// void httpDebugPrint(char *message)
-// {
-//   Serial.print("[HTTP DEBUG] ");
-//   Serial.println(message);
-// }
 void getAllData()
 {
 
   Serial.println("Inside getAllData");
-    WiFiClientSecure client;
-    HTTPClient http;
-    client.setInsecure();
-
-    http.setTimeout(10000);
+  WiFiClientSecure client;
+  HTTPClient http;
+  client.setInsecure();
+  yield();
+  http.setTimeout(20000);
   JsonDocument doc;
   for (int i = 1;; i++)
   {
 
-
     String pageParam = String(i);
     String serverPath = LOCALHOST + "/student/allData?page=" + pageParam;
-    Serial.print("SERVER PATH: ");
+    Serial.println("SERVER PATH: ");
     Serial.println(serverPath);
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -258,10 +266,10 @@ void getAllData()
     delay(500);
     // Print headers
     Serial.println("Response Headers:");
-    String headers = http.getString();
-    Serial.println(headers);
+    // String headers = http.getString();
+    // Serial.println(headers);
 
-    Serial.print("httpResponseCode");
+    Serial.print("httpResponseCode: ");
     Serial.println(httpResponseCode);
 
     if (httpResponseCode == 200)
@@ -275,7 +283,9 @@ void getAllData()
         Serial.print("JSON deserialization error: ");
         Serial.println(jsonError.c_str());
         // Handle the error (e.g., return or break)
-        break;
+        i--;
+        yield();
+        continue;
       }
 
       arr = doc.as<JsonArray>();
@@ -290,16 +300,19 @@ void getAllData()
           rfidFile.close();
           continue;
         }
-        Serial.println(dataChunk);
+        // Serial.println(dataChunk);
         rfidFile.println(dataChunk);
         rfidFile.close();
       }
+      Serial.print("Header Length: ");
+      Serial.print(arr.size());
       gotdata = true;
     }
     else if (httpResponseCode == 404)
     {
       Serial.println("Data not found (404)");
       gotdata = true;
+      blinkAllLEDs(4, 500);
       break;
     }
     else
@@ -315,9 +328,16 @@ void getAllData()
   Serial.println("Exiting getAllData");
 }
 
-// extract strings
+// extract strings from payload into masters.txt file and masters array (helping fucntion for getMasters())
 void extractStrings(String payload)
 {
+  File file = SPIFFS.open(MASTERS_FILE, "w"); // Open "masters.txt" in write mode
+  if (!file)
+  {
+    Serial.println("Failed to open master file for writing");
+    glowLED(500);
+    // return;
+  }
   int startIdx = payload.indexOf("\"") + 1; // Find the first occurrence of "
   int endIdx;
   for (int i = 0; i < 3; i++)
@@ -326,57 +346,161 @@ void extractStrings(String payload)
     if (endIdx != -1)
     {
       masters[i] = payload.substring(startIdx, endIdx);
+      if (file)
+        file.println(masters[i]);
       startIdx = payload.indexOf("\"", endIdx + 1) + 1; // Move to the next string
     }
   }
+  file.close();
 }
 
 // get masters rfid to perform sendToBackend
 void getMasters()
 {
-  JsonDocument doc;
-  if (WiFi.status() == WL_CONNECTED)
+  // reading previous masters from masters file
+  File file = SPIFFS.open(MASTERS_FILE, "r"); // Open "masters.txt" in read mode
+  if (!file)
   {
-    HTTPClient http;
-    WiFiClientSecure client;
-    client.setInsecure();
-    http.begin(client, MASTER.c_str());
-
-    int httpCode = http.GET();
-
-    if (httpCode > 0)
+    Serial.println("Failed to open master file for reading");
+    glowLED(500);
+  }
+  else
+  {
+    // Read the strings from the file and assign them to the masters array
+    for (int i = 0; i < 3; i++)
     {
+      if (file.available())
+      {
+        masters[i] = file.readStringUntil('\n');
+      }
+      else
+      {
+        // Serial.println("Unexpected end of file");
+        break;
+      }
+    }
+  }
+  file.close(); // Close the file
+
+  JsonDocument doc;
+  for (int i = 0; i < 3; i++)
+  {
+    // retry three times
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      HTTPClient http;
+      WiFiClientSecure client;
+      client.setInsecure();
+      yield();
+
+      http.setTimeout(10000);
+      http.begin(client, MASTER.c_str());
+      // delay(500);
+      int httpCode = http.GET();
+      delay(1000);
       if (httpCode == HTTP_CODE_OK)
       {
         String payload = http.getString();
         // Deserialize the JSON object into the JSON document
         DeserializationError error = deserializeJson(doc, payload);
-        Serial.println("Response:");
-        Serial.println(payload);
+        if (error)
+        {
+          Serial.print("deserializeJson() failed: ");
+          Serial.println(error.c_str());
+          glowLED(500);
+          gotmasters = false;
+          return;
+          // break;
+        }
         // put into master array
         extractStrings(payload);
         gotmasters = true;
       }
+
+      else
+      {
+        gotmasters = false;
+        Serial.print("Error code");
+        Serial.println(httpCode);
+        Serial.printf(" Cannot get masters, error: %s\n", http.errorToString(httpCode).c_str());
+        glowLED(500);
+      }
+
+      http.end();
     }
     else
     {
       gotmasters = false;
-      Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
-      glowLED(500);
+      Serial.println("WiFi not connected");
     }
+  }
+}
 
-    http.end();
+// helping function for setcurrdatetime()
+void fetchPreviousDateTime()
+{
+  Serial.println("Inside fetchPreviousDateTime");
+
+  int datetimeEntries[6] = {0, 0, 0, 0, 0, 0};
+  File file = SPIFFS.open(DATE_TIME_FILE, "r"); // Open "masters.txt" in write mode
+  if (!file)
+  {
+    Serial.println("Failed to open date time file for reading");
+    glowLED(500);
+  }
+
+  else
+  {
+    Serial.println("Inside fetchPreviousDateTime else part");
+    int entryIndex = 0;
+    // Read datetime entries from the file
+    while (file.available() && entryIndex < 6)
+    {
+      yield();
+      String line = file.readStringUntil('\n');
+      sscanf(line.c_str(), "%d", &datetimeEntries[entryIndex]);
+      entryIndex++;
+    }
+    CURR_DATE[0] = datetimeEntries[0];
+    CURR_DATE[1] = datetimeEntries[1];
+    CURR_DATE[2] = datetimeEntries[2];
+    DEFAULT_TIME[0] = datetimeEntries[3];
+    DEFAULT_TIME[1] = datetimeEntries[4];
+    DEFAULT_TIME[2] = datetimeEntries[5];
+  }
+
+  file.close(); // Close the file
+}
+
+// helping function for setcurrdatetime()
+void storeDatetimeToFile()
+{
+  File file = SPIFFS.open(DATE_TIME_FILE, "w"); // Open "datetime.txt" in write mode
+  if (!file)
+  {
+    Serial.println("Failed to open datetime file for writing");
+    glowLED(500);
   }
   else
   {
-    gotmasters = false;
-    Serial.println("WiFi not connected");
+    // Write the date and time values to the file, each in a new line
+    file.println(CURR_DATE[0]);    // year
+    file.println(CURR_DATE[1]);    // month
+    file.println(CURR_DATE[2]);    // day
+    file.println(DEFAULT_TIME[0]); // hour
+    file.println(DEFAULT_TIME[1]); // minute
+    file.println(DEFAULT_TIME[2]); // second
   }
+  file.close(); // Close the file
 }
 
 // FETCH CURRENT DATE AND TIME FROM SERVER IN 5 RETRY (or use default one)
 void setcurrdatetime()
 {
+  Serial.println("Inside setcurrdatetime");
+
+  // fetch previous fetched date and time from the file
+  fetchPreviousDateTime();
   // CALL TO BACKEND TO FETCH DATE AND TIME
   WiFiClientSecure client;
   HTTPClient http;
@@ -384,12 +508,16 @@ void setcurrdatetime()
 
   // WILL TRY 5 TIMES TO FETCH DATE AND TIME
   JsonDocument doc;
-  for (int i = 1; i < 6; i++)
+  for (int i = 1; i < 3; i++)
   {
+    yield();
+    Serial.println("Inside setcurrdatetime for loop");
+
     String serverPath = LOCALHOST + "/student/currentDateTime";
     // Your Domain name with URL path or IP address with path
     if (WiFi.status() == WL_CONNECTED)
     {
+      http.setTimeout(10000);
       http.begin(client, serverPath.c_str());
     }
     else
@@ -402,7 +530,7 @@ void setcurrdatetime()
     }
     // Send HTTP GET request
     int httpResponseCode = http.GET();
-    delay(100);
+    delay(1000);
     if (httpResponseCode == 200)
     {
 
@@ -425,6 +553,7 @@ void setcurrdatetime()
       DEFAULT_TIME[1] = doc["minutes"];
       DEFAULT_TIME[2] = doc["seconds"];
       Serial.println("Successfully fetched current date and time");
+      storeDatetimeToFile();
       break;
     }
     else
@@ -434,6 +563,7 @@ void setcurrdatetime()
       glowLED(500);
     }
   }
+
   if (gotCurrDateAndTime == false)
   {
     Serial.println("Failed to fetch current Date and Time");
@@ -708,9 +838,9 @@ int sendToBackend()
             Serial.println(httpResponseCode);
             if (httpResponseCode == 200)
             {
-              digitalWrite(D3, LOW);
+              digitalWrite(D8, LOW);
               delay(500);
-              digitalWrite(D3, HIGH);
+              digitalWrite(D8, HIGH);
             }
             else
             {
@@ -859,5 +989,72 @@ void formatSPIFFS()
   else
   {
     Serial.println("Error formatting SPIFFS!");
+  }
+}
+
+// blick a led multiple times
+void blinkLEDTimes(String LED, int times, int dlay = 300, String returning_state = "LOW")
+{
+  int ledPin;
+
+  // Determine the GPIO pin based on the LED string
+  if (LED == "D0")
+  {
+    ledPin = D0;
+  }
+  else if (LED == "D1")
+  {
+    ledPin = D1;
+  }
+  else if (LED == "D2")
+  {
+    ledPin = D2;
+  }
+  else if (LED == "D8")
+  {
+    ledPin = D8;
+  }
+  else
+  {
+    Serial.println("Invalid LED");
+    return;
+  }
+
+  // Set pin mode to output
+  pinMode(ledPin, OUTPUT);
+
+  // Save the initial state of the LED
+  // returning_state = returning_state.toUpperCase(); //not working
+  bool returningState = (returning_state == "HIGH");
+
+  // Blink the LED
+  for (int i = 0; i < times; i++)
+  {
+    digitalWrite(ledPin, HIGH); // Toggle LED state
+    delay(dlay);
+    digitalWrite(ledPin, LOW); // Toggle LED state back
+    delay(dlay);
+  }
+
+  digitalWrite(ledPin, returningState);
+  return;
+}
+
+// blink all leds multiple times
+void blinkAllLEDs(int times, int dlay = 300)
+{
+  // Blink all LEDs simultaneously
+  for (int i = 0; i < times; i++)
+  {
+    digitalWrite(D0, HIGH);
+    digitalWrite(D1, HIGH);
+    digitalWrite(D2, HIGH);
+    digitalWrite(D8, HIGH);
+    delay(dlay);
+    digitalWrite(D0, LOW);
+    digitalWrite(D1, LOW);
+    digitalWrite(D2, LOW);
+    digitalWrite(D8, LOW);
+    delay(dlay);
   }
 }
