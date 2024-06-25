@@ -6,6 +6,9 @@
 
 This project is an RFID-based attendance system designed to streamline attendance tracking while ensuring robustness and reliability. The system is capable of functioning even in scenarios where Wi-Fi connectivity is lost or the backend server fails, thanks to its offline capabilities and built-in battery backup. This reduces manual effort, enhances accuracy, and simplifies attendance management processes.
 
+Explore a live demo of the project:
+https://drive.google.com/drive/folders/1W0VWSmqyWlxAUKie9-PCyebDMAZzshVx
+
 ## Features
 
 - **RFID Technology**: Utilizes RFID (Radio Frequency Identification) for quick and accurate identification of individuals.
